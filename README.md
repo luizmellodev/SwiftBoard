@@ -113,6 +113,61 @@ Where those two calls physically live — your main app, a separate
 design-system package, a tiny standalone executable — is entirely up to you;
 SwiftBoard doesn't require a specific project layout.
 
+> **On a real iOS device** (not needed on the Simulator or macOS):
+> `BoardServer` listens on all interfaces, not just loopback, so add
+> `NSLocalNetworkUsageDescription` to your app's Info.plist (any string
+> explaining why, e.g. "Used to preview the design system in a browser") —
+> without it, iOS may block the first connection instead of serving it.
+
+## FAQ
+
+**I'm starting a brand-new project and want to build my own design system
+from scratch.** Create your app, add `SwiftBoardServer` as a dependency,
+build your components as normal SwiftUI views, and conform each one to
+`BoardScenarioProvider` right in its own file (see "Creating a new component
+/ state" below). Register + start behind `#if DEBUG`. This is the most
+tested path — it's exactly what `SwiftBoardDemo` in this repo does.
+
+**I want to start from a complete, ready-made design system instead of
+building one from scratch.** Depend on the `SwiftBoardKit` product instead
+of `SwiftBoardServer`, and call `SwiftDSCatalogRegistrar.registerAll()` — it
+registers all of SwiftDS's existing components for you, nothing to write.
+To later *change* a component's actual appearance, you need your own copy
+of SwiftDS (a fork) — depending on the original and registering more
+scenarios on top lets you add things, not edit SwiftDS's own component code.
+
+**Does that mean I need to add two package dependencies — SwiftBoard and
+SwiftDS?** No. Declaring just `.package(path: "path/to/SwiftBoard")` and
+depending on its `SwiftBoardKit` product is enough — `import SwiftDS` will
+compile in your own code too, since it comes along transitively (tested:
+this works even without declaring SwiftDS directly). That said, if you
+intend to actually *use* SwiftDS's components in your own app code (not just
+see them on the board), declare SwiftDS as your own direct dependency too —
+relying on the transitive/"free ride" import is an SPM implementation detail
+that would break silently if `SwiftBoardKit` ever stopped depending on
+SwiftDS.
+
+**I already have an app that doesn't use any design system — will adding
+SwiftBoard break anything, error, or crash?** No — it's purely additive: one
+new file plus a few lines in your app's startup code, behind `#if DEBUG`.
+Nothing existing gets touched. To roll it in gradually and safely:
+1. Add the `SwiftBoardServer` dependency and build. Nothing calls anything
+   yet, so there's nothing to break.
+2. Register one scenario wrapping a view you already have.
+3. Call `BoardServer().start()` from a `.task`, behind `#if DEBUG`. Test in
+   the Simulator first (sidesteps the local-network question below).
+4. Confirm the printed URL shows that one component.
+5. Add the rest of your real views as providers, one at a time.
+6. Only once you're confident, try a physical device and add
+   `NSLocalNetworkUsageDescription` (see above).
+
+**Does this actually work on iOS, or only macOS?** The core library (and
+FlyingFox, the HTTP server it uses) compiles cleanly for iOS. The two demo
+*apps* bundled in this repo (`SwiftBoardDemo`, `SwiftBoardKitDemo`) are
+macOS-only (they use `AppKit`/`NSWorkspace` to open a window and a browser)
+— that's a limitation of the demos, not of SwiftBoard itself. `BoardGallery`
+uses only cross-platform SwiftUI and works on iOS today.
+
 ## Reference
 
 ### Install

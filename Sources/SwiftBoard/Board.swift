@@ -1,5 +1,13 @@
+import Observation
+
 /// The runtime registry of every category/component/scenario registered by the host app.
+///
+/// `@Observable` so `BoardGallery` refreshes automatically when scenarios are registered after
+/// the view has already appeared (the common case: register, *then* start the server in the
+/// same `.task`) — without it, SwiftUI has no signal that this reference type's contents changed
+/// and the gallery would stay empty until something else happened to trigger a re-render.
 @MainActor
+@Observable
 public final class SwiftBoard {
     public static let shared = SwiftBoard()
 

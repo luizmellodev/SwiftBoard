@@ -49,6 +49,11 @@ let package = Package(
             dependencies: ["SwiftBoardKit"],
             path: "Sources/SwiftBoardKitDemo"
         ),
+        .executableTarget(
+            name: "SwiftBoardiOSDemo",
+            dependencies: ["SwiftBoardKit"],
+            path: "Sources/SwiftBoardiOSDemo"
+        ),
         .testTarget(
             name: "SwiftBoardTests",
             dependencies: ["SwiftBoard", "SwiftBoardServer"],
