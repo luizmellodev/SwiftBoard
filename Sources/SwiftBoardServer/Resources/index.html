@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SwiftBoard</title>
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+  <div class="sb-shell">
+    <aside class="sb-sidebar">
+      <div class="sb-sidebar-header">
+        <span class="sb-logo">SwiftBoard</span>
+        <div class="sb-header-actions">
+          <a class="sb-icon-button" href="/docs" target="_blank" title="Help &amp; docs" aria-label="Help and docs">?</a>
+          <button id="theme-toggle" class="sb-icon-button" title="Toggle theme" aria-label="Toggle theme">
+            <span id="theme-icon">&#9789;</span>
+          </button>
+        </div>
+      </div>
+      <div class="sb-search-wrap">
+        <input id="search" class="sb-search" type="text" placeholder="Search components…" autocomplete="off" />
+      </div>
+      <nav id="sidebar-nav" class="sb-nav"></nav>
+    </aside>
+    <main class="sb-main">
+      <div id="breadcrumb" class="sb-breadcrumb"></div>
+      <div id="grid" class="sb-grid"></div>
+      <div id="empty-state" class="sb-empty-state" hidden>
+        <p>No components registered yet.</p>
+        <p class="sb-empty-hint">Call <code>SwiftBoard.shared.addScenarios(...)</code> in your app, then reload.</p>
+      </div>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
