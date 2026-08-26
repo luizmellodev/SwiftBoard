@@ -163,6 +163,23 @@ swift run SwiftBoardDemo</code></pre>
       image. This is the equivalent of Playbook's in-app gallery/catalog, or of SwiftDS's own
       <code>DSShowcaseRoot</code> — generic, driven by whatever you've registered.</p>
 
+    <h2>Previewing on iOS (not just macOS)</h2>
+    <p><code>SwiftBoardDemo</code> and <code>SwiftBoardKitDemo</code> are plain macOS processes
+      (<code>swift run</code> just runs a binary on your Mac) — fine for the website, but if
+      your design system targets iOS, a macOS process renders SwiftUI with macOS's chrome
+      (fonts, control styles), not iOS's. That's misleading for anything that isn't purely
+      custom-drawn.</p>
+    <p>To see <code>BoardGallery</code> — and this site's snapshots — rendered by a real iOS
+      Simulator instead:</p>
+    <pre><code>Scripts/run-ios-demo.sh</code></pre>
+    <p>This builds <code>SwiftBoardiOSDemo</code> (same SwiftDS registration as
+      <code>SwiftBoardKitDemo</code>, hosted in <code>BoardGallery</code>) for the iOS
+      Simulator, hand-assembles it into an installable <code>.app</code> (plain
+      <code>swift run</code>/<code>swift build</code> can't produce one — this repo has no
+      <code>.xcodeproj</code>), installs it, and launches it on your currently booted
+      Simulator. The website it starts is also reachable at
+      <code>http://127.0.0.1:8080</code> from your Mac — same URL, now genuinely iOS-rendered.</p>
+
     <h2>Using the SwiftDS starter (SwiftBoardKit)</h2>
     <p><code>SwiftBoardKit</code> and <code>SwiftBoardKitDemo</code> are two extra targets that
       already live inside <em>this same</em> <code>SwiftBoard</code> repository — they are not a

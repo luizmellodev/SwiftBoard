@@ -279,6 +279,30 @@ equivalent to Playbook's in-app `PlaybookGallery`/`PlaybookCatalog`, or to
 SwiftDS's own `DSShowcaseRoot` — except generic, driven by whatever you've
 registered.
 
+### Previewing on iOS (not just macOS)
+
+`SwiftBoardDemo` and `SwiftBoardKitDemo` (below) are plain macOS processes
+(`swift run` just runs a binary on your Mac) — fine for the website, but if
+your design system targets iOS, a macOS process renders SwiftUI with macOS's
+chrome (fonts, control styles), not iOS's. That's misleading for anything
+that isn't purely custom-drawn.
+
+To see `BoardGallery` — and the website's snapshots — rendered by a real
+iOS Simulator instead:
+
+```bash
+Scripts/run-ios-demo.sh
+```
+
+This builds `SwiftBoardiOSDemo` (same SwiftDS registration as
+`SwiftBoardKitDemo`, hosted in `BoardGallery`) for the iOS Simulator,
+hand-assembles it into an installable `.app` (plain `swift run`/`swift build`
+can't produce one — that packaging is normally Xcode's job, and this repo
+has no `.xcodeproj`), installs it, and launches it on your currently booted
+Simulator. Pass a device UDID as an argument to target a specific one. The
+website it starts is also reachable at `http://127.0.0.1:8080` from your Mac
+— same URL as the macOS demos, but now genuinely iOS-rendered.
+
 ### Design system starter (SwiftDS)
 
 `SwiftBoardKit` and `SwiftBoardKitDemo` are two extra targets that already
