@@ -38,7 +38,10 @@ swift run SwiftBoardDemo</code></pre>
         <code>main.swift</code> followed by <code>RunLoop.main.run()</code>, then
         <code>swift run</code>.</li>
     </ul>
-    <p>See this repo's <code>README.md</code> for the exact code for both paths.</p>
+    <p>See this repo's <code>README.md</code> for the exact code for both paths. That one-file
+      example is for getting a single component on screen — once you have more than a couple,
+      see "Creating a new component / state" below for a pattern that scales to a whole design
+      system without growing one giant file.</p>
 
     <h2>Where does this code live — my app, or a separate package?</h2>
     <p>Either. SwiftBoard doesn't require a specific project layout — it only cares that
@@ -69,9 +72,29 @@ swift run SwiftBoardDemo</code></pre>
     }
 }</code></pre>
     <p>Each <code>Scenario</code> is one state/card on the site. Calling
-      <code>addScenarios</code> again for the same category/component appends more states to it
-      — you don't need one giant call site; spread registrations across as many files as you
-      like (one per category is a reasonable convention, but not required).</p>
+      <code>addScenarios</code> again for the same category/component appends more states to it.
+      Don't pile every component into one file as your design system grows, though — two ways
+      to keep it manageable:</p>
+    <ul>
+      <li><strong>Co-located, one file per component (recommended default).</strong> Conform the
+        component's own type to <code>BoardScenarioProvider</code>, right in the file where it's
+        already defined — like a <code>#Preview</code> block:
+        <pre><code>extension DemoButton: BoardScenarioProvider {
+    static func provideScenarios(into board: SwiftBoard) {
+        board.addScenarios(category: "Actions", component: "Button") {
+            Scenario("Primary") { DemoButton(title: "Continue", style: .primary) }
+        }
+    }
+}</code></pre>
+        then one line per component ties them together:
+        <code>SwiftBoard.shared.addScenarios(from: [DemoButton.self, DemoBadge.self])</code>.
+        Adding a component means adding one line to that list, not growing a central file.</li>
+      <li><strong>Data-driven, from an existing catalog.</strong> If you already have a
+        structured array of component/variant data — like SwiftDS's <code>DSComponentCatalog</code>
+        — map it once into the data-driven <code>addScenarios(category:component:scenarios:)</code>
+        overload. This is what <code>SwiftDSCatalogRegistrar</code> does for SwiftDS's ~40
+        entries; it scales to hundreds without a hand-written call per state.</li>
+    </ul>
 
     <h2>Modifying an existing component</h2>
     <p>Edit the SwiftUI view code inside the <code>Scenario</code>'s closure (or the underlying

@@ -66,6 +66,11 @@ whichever matches what you have today:
 4. Run your app as usual (⌘R). Watch the console for the printed URL, open
    it in a browser.
 
+   > This one-file example is for getting one component on screen. Once you
+   > have more than a couple, don't keep growing `BoardScenarios.swift` —
+   > see "Creating a new component / state" under Reference below for a
+   > pattern that scales to a whole design system.
+
 **B. You don't have a project yet and just want to try this on its own**
 
 ```bash
@@ -145,7 +150,36 @@ build, set the `SWIFTBOARD_ENABLE=1` environment variable.
 
 **Creating a new component / state** — call `addScenarios` again, for a new
 component or one that already exists (it appends). No file-naming convention
-is enforced.
+is enforced — but don't pile every component's registration into one file as
+your design system grows. Two ways to keep it manageable:
+
+- **Co-located, one file per component (recommended default).** Conform the
+  component's own type to `BoardScenarioProvider`, right in the same file as
+  the component — the same way you'd add a `#Preview` block:
+  ```swift
+  // DemoButton.swift — the file where DemoButton is already defined
+  extension DemoButton: BoardScenarioProvider {
+      static func provideScenarios(into board: SwiftBoard) {
+          board.addScenarios(category: "Actions", component: "Button") {
+              Scenario("Primary") { DemoButton(title: "Continue", style: .primary) }
+              Scenario("Disabled") { DemoButton(title: "Continue", style: .disabled) }
+          }
+      }
+  }
+  ```
+  Then one line per component ties them together, wherever you call it:
+  ```swift
+  SwiftBoard.shared.addScenarios(from: [DemoButton.self, DemoBadge.self, DemoCard.self])
+  ```
+  Adding a component means adding one line to that list, not growing a
+  central file. See `Sources/SwiftBoardDemo/*.swift` in this repo for a real
+  example of this pattern.
+- **Data-driven, from an existing catalog.** If you already have (or want) a
+  structured array of "component × variant" data — like SwiftDS's
+  `DSComponentCatalog` — map it once with a small loop into the data-driven
+  `addScenarios(category:component:scenarios:)` overload. This is what
+  `SwiftBoardKit`'s `SwiftDSCatalogRegistrar` does for SwiftDS's ~40 entries;
+  it scales to hundreds without hand-writing a registration call per state.
 
 **Modifying an existing component** — edit the SwiftUI view code inside the
 `Scenario`'s closure (or the underlying component's own source). This is
