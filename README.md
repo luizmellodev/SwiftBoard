@@ -166,6 +166,30 @@ Produces a self-contained `index.html` + `app.css` + `app.js` + `docs.html` +
 `manifest.json` + `snapshots/**/*.png` folder — deployable to any static
 host, or just open `index.html` via `file://`.
 
+### Native gallery view (no server required)
+
+Everything above serves a *website*. If you'd rather show the same registered
+scenarios **inside your own app**, natively — no HTTP server, no
+`SwiftBoardServer`/FlyingFox dependency at all — use `BoardGallery`, a plain
+SwiftUI `View` that lives in the base `SwiftBoard` target:
+
+```swift
+import SwiftBoard
+
+.sheet(isPresented: $showGallery) {
+    BoardGallery() // reads SwiftBoard.shared by default
+}
+```
+
+It reads the exact same registry the website reads, so a single
+`addScenarios` call feeds both — but here each state renders as your actual
+live SwiftUI view (not a snapshot image), inside a searchable
+sidebar/detail layout you can present however you like (sheet, push, a
+shake-gesture debug menu, whatever fits your app). This is the piece
+equivalent to Playbook's in-app `PlaybookGallery`/`PlaybookCatalog`, or to
+SwiftDS's own `DSShowcaseRoot` — except generic, driven by whatever you've
+registered.
+
 ### Design system starter (SwiftDS)
 
 `SwiftBoardKit` and `SwiftBoardKitDemo` are two extra targets that already

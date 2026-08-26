@@ -84,6 +84,21 @@ swift run SwiftBoardDemo</code></pre>
       persisted registry to clean up — the board only exists in memory for the life of the
       running process; every run starts from nothing and re-registers whatever your code calls.</p>
 
+    <h2>Native gallery view (no server required)</h2>
+    <p>This site is a website. If you'd rather show the same registered scenarios
+      <strong>inside your own app</strong>, natively — no HTTP server, no
+      <code>SwiftBoardServer</code>/FlyingFox dependency at all — use <code>BoardGallery</code>, a
+      plain SwiftUI view that lives in the base <code>SwiftBoard</code> target:</p>
+    <pre><code>import SwiftBoard
+
+.sheet(isPresented: $showGallery) {
+    BoardGallery() // reads SwiftBoard.shared by default
+}</code></pre>
+    <p>It reads the exact same registry this site reads, so one <code>addScenarios</code> call
+      feeds both — but here each state renders as your actual live SwiftUI view, not a snapshot
+      image. This is the equivalent of Playbook's in-app gallery/catalog, or of SwiftDS's own
+      <code>DSShowcaseRoot</code> — generic, driven by whatever you've registered.</p>
+
     <h2>Using the SwiftDS starter (SwiftBoardKit)</h2>
     <p><code>SwiftBoardKit</code> and <code>SwiftBoardKitDemo</code> are two extra targets that
       already live inside <em>this same</em> <code>SwiftBoard</code> repository — they are not a
