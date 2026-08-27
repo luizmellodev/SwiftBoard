@@ -22,6 +22,9 @@ struct SwiftBoardKitDemoApp: App {
             .frame(minWidth: 360, minHeight: 200)
             .task {
                 SwiftDSCatalogRegistrar.registerAll()
+                await server.addAction(title: "Run iOS Demo (Simulator)") {
+                    try Self.runIOSDemoScript()
+                }
                 do {
                     try await server.start()
                     statusText = "Running at \(url.absoluteString)"
@@ -30,5 +33,20 @@ struct SwiftBoardKitDemoApp: App {
                 }
             }
         }
+    }
+
+    /// Launches Scripts/run-ios-demo.sh, resolved relative to this source file so it works
+    /// regardless of the working directory `swift run` was invoked from.
+    private nonisolated static func runIOSDemoScript() throws {
+        let scriptURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Scripts/run-ios-demo.sh")
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = [scriptURL.path]
+        try process.run()
     }
 }

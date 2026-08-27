@@ -17,10 +17,18 @@ public actor BoardServer {
     private let httpServer: HTTPServer
     private let cache = SnapshotCache()
     private var runTask: Task<Void, Error>?
+    private var actions: [BoardAction] = []
 
     public init(configuration: Configuration = .init()) {
         self.configuration = configuration
         self.httpServer = HTTPServer(port: configuration.port)
+    }
+
+    /// Registers a custom action, shown as a button on the site. Runs only for requests from
+    /// the local machine (127.0.0.1), never from another device on the network, even though the
+    /// server itself listens on all interfaces. Call before `start()`.
+    public func addAction(title: String, id: String? = nil, run: @escaping @Sendable () async throws -> Void) {
+        actions.append(BoardAction(title: title, id: id, run: run))
     }
 
     /// Starts the server. No-ops in Release builds unless `SWIFTBOARD_ENABLE=1` is set.
@@ -60,12 +68,32 @@ public actor BoardServer {
             StaticAssets.response(for: "docs.html")
         }
 
+        let actionSummaries = actions.map { ActionSummary(id: $0.id, title: $0.title) }
         await httpServer.appendRoute("GET /manifest.json") { _ in
             let manifest = await MainActor.run { ManifestBuilder.build(from: SwiftBoard.shared) }
-            guard let data = try? JSONEncoder().encode(manifest) else {
+            let response = ManifestResponse(boardName: manifest.boardName, categories: manifest.categories, actions: actionSummaries)
+            guard let data = try? JSONEncoder().encode(response) else {
                 return HTTPResponse(statusCode: .internalServerError)
             }
             return HTTPResponse(statusCode: .ok, headers: [.contentType: "application/json; charset=utf-8"], body: data)
+        }
+
+        await httpServer.appendRoute("POST /actions/:id") { request in
+            guard Self.isLocalRequest(request) else {
+                return HTTPResponse(statusCode: .forbidden)
+            }
+            guard
+                let id = request.routeParameters["id"],
+                let action = await self.action(withID: id)
+            else {
+                return HTTPResponse(statusCode: .notFound)
+            }
+            do {
+                try await action.run()
+                return HTTPResponse(statusCode: .ok)
+            } catch {
+                return HTTPResponse(statusCode: .internalServerError)
+            }
         }
 
         let cache = self.cache
@@ -100,4 +128,36 @@ public actor BoardServer {
             return HTTPResponse(statusCode: .ok, headers: [.contentType: "image/png", .cacheControl: "no-store"], body: data)
         }
     }
+
+    private func action(withID id: String) -> BoardAction? {
+        actions.first { $0.id == id }
+    }
+
+    /// Trusts only the actual socket peer address — deliberately ignores `X-Forwarded-For`
+    /// (client-controlled, spoofable), since this gates code execution, not just a redirect.
+    private static func isLocalRequest(_ request: HTTPRequest) -> Bool {
+        switch request.remoteAddress {
+        case .ip4(let ip, port: _):
+            return ip == "127.0.0.1"
+        case .ip6(let ip, port: _):
+            // IPv4-mapped IPv6 (e.g. "::ffff:127.0.0.1") is what a dual-stack listener
+            // typically reports for a plain IPv4 loopback connection, not just "::1".
+            return ip == "::1" || ip == "::ffff:127.0.0.1"
+        case .unix:
+            return true
+        case .none:
+            return false
+        }
+    }
+}
+
+private struct ManifestResponse: Encodable {
+    let boardName: String
+    let categories: [ManifestCategory]
+    let actions: [ActionSummary]
+}
+
+private struct ActionSummary: Encodable {
+    let id: String
+    let title: String
 }

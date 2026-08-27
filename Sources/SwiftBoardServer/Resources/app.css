@@ -159,6 +159,50 @@ body {
   display: none;
 }
 
+.sb-actions {
+  padding: 8px;
+  border-top: 1px solid var(--sb-border);
+}
+
+.sb-actions[hidden] {
+  display: none;
+}
+
+.sb-action-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  margin-top: 4px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--sb-text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sb-action-button:hover {
+  background: var(--sb-border);
+}
+
+.sb-action-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sb-action-status {
+  font-size: 11px;
+  color: var(--sb-text-muted);
+}
+
+.sb-action-status.error {
+  color: oklch(60% 0.2 25);
+}
+
 .sb-main {
   flex: 1;
   overflow-y: auto;

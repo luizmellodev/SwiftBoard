@@ -127,6 +127,58 @@
     });
   }
 
+  function renderActions() {
+    var container = document.getElementById("sidebar-actions");
+    var actions = manifest.actions || [];
+
+    if (actions.length === 0) {
+      container.hidden = true;
+      return;
+    }
+
+    container.hidden = false;
+    container.innerHTML = actions
+      .map(function (action) {
+        return (
+          '<button class="sb-action-button" data-action-id="' +
+          action.id +
+          '"><span>' +
+          action.title +
+          '</span><span class="sb-action-status" data-status-for="' +
+          action.id +
+          '"></span></button>'
+        );
+      })
+      .join("");
+
+    container.querySelectorAll(".sb-action-button").forEach(function (button) {
+      button.addEventListener("click", function () {
+        runAction(button.dataset.actionId, button);
+      });
+    });
+  }
+
+  function runAction(id, button) {
+    var status = document.querySelector('[data-status-for="' + id + '"]');
+    button.disabled = true;
+    status.classList.remove("error");
+    status.textContent = "Running…";
+
+    fetch("/actions/" + id, { method: "POST" })
+      .then(function (response) {
+        if (!response.ok) throw new Error("Failed (" + response.status + ")");
+        status.textContent = "Done";
+      })
+      .catch(function (error) {
+        status.classList.add("error");
+        status.textContent = error.message;
+      })
+      .finally(function () {
+        button.disabled = false;
+        setTimeout(function () { status.textContent = ""; }, 4000);
+      });
+  }
+
   function onSearch(event) {
     var query = event.target.value.trim().toLowerCase();
     document.querySelectorAll(".sb-nav-category").forEach(function (categoryEl) {
@@ -148,6 +200,7 @@
       .then(function (data) {
         manifest = data;
         renderSidebar();
+        renderActions();
 
         var firstCategory = manifest.categories[0];
         var firstComponent = firstCategory && firstCategory.components[0];

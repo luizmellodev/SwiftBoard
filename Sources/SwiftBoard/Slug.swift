@@ -1,7 +1,7 @@
 import Foundation
 
-enum Slug {
-    static func make(_ raw: String) -> String {
+public enum Slug {
+    public static func make(_ raw: String) -> String {
         let lowered = raw.lowercased()
         var result = ""
         var lastWasSeparator = true
