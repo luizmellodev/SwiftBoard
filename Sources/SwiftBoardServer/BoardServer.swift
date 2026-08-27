@@ -43,8 +43,27 @@ public actor BoardServer {
         await registerRoutes()
 
         let server = httpServer
-        runTask = Task { try await server.run() }
-        try await server.waitUntilListening()
+        let task = Task { try await server.run() }
+        runTask = task
+
+        // Race listening-succeeded against run()-failed, so a bind failure (e.g. the port is
+        // already taken by another instance) surfaces immediately with its real error instead
+        // of waiting out `waitUntilListening`'s generic 5-second timeout.
+        do {
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask { try await server.waitUntilListening() }
+                group.addTask {
+                    do {
+                        try await task.value
+                    } catch is CancellationError {}
+                }
+                defer { group.cancelAll() }
+                try await group.next()
+            }
+        } catch {
+            throw BoardServerError.failedToStart(port: configuration.port, underlying: error)
+        }
+
         print("SwiftBoard running at http://127.0.0.1:\(configuration.port)")
     }
 
@@ -147,6 +166,19 @@ public actor BoardServer {
             return true
         case .none:
             return false
+        }
+    }
+}
+
+public enum BoardServerError: Error, CustomStringConvertible {
+    case failedToStart(port: UInt16, underlying: Error)
+
+    public var description: String {
+        switch self {
+        case .failedToStart(let port, let underlying):
+            return "SwiftBoard couldn't start on port \(port). If another instance is already " +
+                "running (another SwiftBoard-based app, or a previous run you forgot to stop), " +
+                "stop it and try again. Underlying error: \(underlying)"
         }
     }
 }

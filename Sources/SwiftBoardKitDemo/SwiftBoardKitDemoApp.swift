@@ -6,6 +6,7 @@ import SwiftBoardKit
 struct SwiftBoardKitDemoApp: App {
     @State private var server = BoardServer()
     @State private var statusText = "Starting…"
+    @State private var iosDemoStatus = ""
 
     private let url = URL(string: "http://127.0.0.1:8080")!
 
@@ -14,12 +15,26 @@ struct SwiftBoardKitDemoApp: App {
             VStack(spacing: 12) {
                 Text("SwiftBoard × SwiftDS").font(.title2).bold()
                 Text(statusText).foregroundStyle(.secondary)
-                Button("Open in Browser") {
-                    NSWorkspace.shared.open(url)
+                HStack(spacing: 12) {
+                    Button("Open in Browser") {
+                        NSWorkspace.shared.open(url)
+                    }
+                    Button("Run iOS Demo (Simulator)") {
+                        iosDemoStatus = "Starting…"
+                        do {
+                            try Self.runIOSDemoScript()
+                            iosDemoStatus = "Started"
+                        } catch {
+                            iosDemoStatus = "Failed: \(error)"
+                        }
+                    }
+                }
+                if !iosDemoStatus.isEmpty {
+                    Text(iosDemoStatus).font(.caption).foregroundStyle(.secondary)
                 }
             }
             .padding(40)
-            .frame(minWidth: 360, minHeight: 200)
+            .frame(minWidth: 420, minHeight: 200)
             .task {
                 SwiftDSCatalogRegistrar.registerAll()
                 await server.addAction(title: "Run iOS Demo (Simulator)") {

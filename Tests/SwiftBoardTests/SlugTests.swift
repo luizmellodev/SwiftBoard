@@ -17,4 +17,9 @@ final class SlugTests: XCTestCase {
     func testEmptyInputFallsBackToItem() {
         XCTAssertEqual(Slug.make("!!!"), "item")
     }
+
+    func testCamelCaseMatchesSpacedEquivalent() {
+        XCTAssertEqual(Slug.make("IconButton"), Slug.make("Icon Button"))
+        XCTAssertEqual(Slug.make("IconButton"), "icon-button")
+    }
 }
