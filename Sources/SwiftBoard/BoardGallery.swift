@@ -1,4 +1,9 @@
 import SwiftUI
+#if canImport(AppKit)
+import AppKit
+#elseif canImport(UIKit)
+import UIKit
+#endif
 
 /// A drop-in SwiftUI view that browses every registered scenario **natively** — no server, no
 /// snapshot rendering, just your actual views rendered live. Present it however fits your app,
@@ -7,16 +12,33 @@ import SwiftUI
 @MainActor
 public struct BoardGallery: View {
     private let board: SwiftBoard
+    private let websiteURL: URL?
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
+    @State private var copied = false
 
-    public init(board: SwiftBoard? = nil) {
+    public init(board: SwiftBoard? = nil, websiteURL: URL? = nil) {
         self.board = board ?? .shared
+        self.websiteURL = websiteURL
     }
 
     public var body: some View {
         NavigationStack {
             List {
+                if let websiteURL {
+                    Section {
+                        Button(copied ? "Copied" : "Copy link") {
+                            copyWebsiteURL(websiteURL)
+                        }
+                    } header: {
+                        Text("Mac browser · paste for the full site")
+                            .textCase(nil)
+                    } footer: {
+                        Text(websiteURL.absoluteString)
+                            .font(.system(.caption2, design: .monospaced))
+                            .textCase(nil)
+                    }
+                }
                 ForEach(filteredGroups) { group in
                     Section(group.name) {
                         ForEach(group.components) { component in
@@ -29,11 +51,28 @@ public struct BoardGallery: View {
             }
             .searchable(text: $searchText, prompt: "Search components")
             .navigationTitle("Components")
+            #if os(iOS) || os(visionOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
                 }
             }
+        }
+    }
+
+    private func copyWebsiteURL(_ url: URL) {
+        #if canImport(UIKit) && !os(watchOS)
+        UIPasteboard.general.string = url.absoluteString
+        #elseif canImport(AppKit)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(url.absoluteString, forType: .string)
+        #endif
+        copied = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.5))
+            copied = false
         }
     }
 

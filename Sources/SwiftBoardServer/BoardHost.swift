@@ -1,17 +1,11 @@
 import SwiftUI
-#if canImport(UIKit)
-import UIKit
-#endif
-#if canImport(AppKit)
-import AppKit
-#endif
 
 public extension View {
     /// Starts the board server after `register` runs, and shows a small live badge so a
     /// developer knows the site is up. Does not replace or wrap the app's own UI.
     ///
-    /// Tap the badge to open the in-app gallery. Copy the URL from that sheet and paste it
-    /// in a Mac browser for the full website.
+    /// Tap the badge to open the in-app gallery. Copy the URL from the top of that list
+    /// and paste it in a Mac browser for the full website.
     func swiftBoard(
         port: UInt16 = 8080,
         register: @escaping @MainActor () -> Void
@@ -51,7 +45,7 @@ private struct BoardHost<Content: View>: View {
                     .zIndex(999)
             }
             .sheet(isPresented: $showBoard) {
-                BoardSessionSheet(port: port, statusLine: statusLine)
+                BoardGallery(websiteURL: URL(string: "http://127.0.0.1:\(port)"))
             }
             .task(id: port) {
                 register()
@@ -97,66 +91,11 @@ private struct BoardHost<Content: View>: View {
         }
     }
 
-    private var statusLine: String {
-        switch status {
-        case .starting: return "Server is still starting…"
-        case .running: return "Server is running."
-        case .failed(let message): return "Server failed: \(message)"
-        }
-    }
-
     private var dotColor: Color {
         switch status {
         case .starting: return .yellow
         case .running: return .green
         case .failed: return .red
-        }
-    }
-}
-
-private struct BoardSessionSheet: View {
-    let port: UInt16
-    let statusLine: String
-    @State private var copied = false
-
-    private var urlString: String { "http://127.0.0.1:\(port)" }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Paste this URL in Safari or Chrome on your Mac for the full board — it is easier to browse on a desktop browser.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Text(urlString)
-                    .font(.system(.caption, design: .monospaced))
-                Text(statusLine)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                Button(copied ? "Copied" : "Copy link") {
-                    copyURL()
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-
-            Divider()
-
-            BoardGallery()
-        }
-    }
-
-    private func copyURL() {
-        #if canImport(UIKit) && !os(watchOS)
-        UIPasteboard.general.string = urlString
-        #elseif canImport(AppKit)
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(urlString, forType: .string)
-        #endif
-        copied = true
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.5))
-            copied = false
         }
     }
 }
