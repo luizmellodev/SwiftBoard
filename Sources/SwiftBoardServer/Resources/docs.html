@@ -100,6 +100,63 @@ struct MeuApp: App {
       only added a DEBUG label with the URL, and that is optional.
     </div>
 
+    <h2>The usual pattern (one component + the list)</h2>
+    <p>Three steps. The view does <strong>not</strong> import SwiftBoard. Only the DEBUG
+      extension does.</p>
+    <p><strong>1. The component</strong> — states live next to the view, like a
+      <code>#Preview</code>:</p>
+    <pre><code>import SwiftUI
+
+struct AppButton: View {
+    let title: String
+    var body: some View {
+        Button(title) {}.buttonStyle(.borderedProminent)
+    }
+}
+
+#if DEBUG
+import SwiftBoardServer
+
+extension AppButton: BoardScenarioProvider {
+    static func provideScenarios(into board: SwiftBoard) {
+        board.addScenarios(
+            category: "Actions",
+            component: "Button",
+            summary: "Primary tappable action.",
+            parameters: [
+                ScenarioParameter(name: "title", type: "String")
+            ]
+        ) {
+            Scenario("Primary", docs: ScenarioDocs(snippet: "AppButton(title: \"Continue\")")) {
+                AppButton(title: "Continue")
+            }
+            Scenario("Disabled") {
+                AppButton(title: "Continue").disabled(true)
+            }
+        }
+    }
+}
+#endif</code></pre>
+    <p>That <code>addScenarios</code> is <em>this</em> component only. Extra
+      <code>Scenario(...)</code> blocks are states (Primary, Disabled), not more components.</p>
+    <p><strong>2. The list</strong> — one line per component. It does not grow with every
+      state, only when you add a new type. Small DS = tiny file; 80 components = 80 lines of
+      <code>.self</code>, not 80 copies of the preview:</p>
+    <pre><code>#if DEBUG
+import SwiftBoardServer
+
+enum BoardScenarios {
+    @MainActor
+    static func registerAll() {
+        SwiftBoard.shared.addScenarios(from: [
+            AppButton.self,
+            AppBadge.self,
+        ])
+    }
+}
+#endif</code></pre>
+    <p><strong>3. App.swift</strong> — start the server (see above). Then ⌘R and open the URL.</p>
+
     <h2>Getting started</h2>
     <p><strong>1. See it working (zero setup).</strong> This repo already has a working demo
       you can run before writing anything:</p>
