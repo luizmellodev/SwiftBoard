@@ -43,24 +43,13 @@ public actor BoardServer {
         await registerRoutes()
 
         let server = httpServer
-        let task = Task { try await server.run() }
+        let task = Task.detached { try await server.run() }
         runTask = task
 
-        // Race listening-succeeded against run()-failed, so a bind failure (e.g. the port is
-        // already taken by another instance) surfaces immediately with its real error instead
-        // of waiting out `waitUntilListening`'s generic 5-second timeout.
         do {
-            try await withThrowingTaskGroup(of: Void.self) { group in
-                group.addTask { try await server.waitUntilListening() }
-                group.addTask {
-                    do {
-                        try await task.value
-                    } catch is CancellationError {}
-                }
-                defer { group.cancelAll() }
-                try await group.next()
-            }
+            try await server.waitUntilListening()
         } catch {
+            task.cancel()
             throw BoardServerError.failedToStart(port: configuration.port, underlying: error)
         }
 

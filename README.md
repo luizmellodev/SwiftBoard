@@ -16,13 +16,12 @@ whatever the running app registered.
 
 1. Add the **SwiftBoardServer** library.
 2. Call `SwiftBoard.shared.addScenarios(...)` with your SwiftUI views (any file).
-3. Call `BoardServer().start()` once at launch, behind `#if DEBUG`.
-4. Run the app and open the printed `http://127.0.0.1:8080`.
+3. Attach `.swiftBoard { … }` to the root view, behind `#if DEBUG` — that starts
+   the server and shows a live badge (green = up). Tap the badge to copy the URL.
+4. Open `http://127.0.0.1:8080` in a Mac browser. That website is the gallery.
 
-The **only** call that must live on the app entry point (`@main` / `App.swift`) is
-`BoardServer().start()` — typically `.task` on the root view, `#if DEBUG`. Registration
-(`addScenarios`) can be another file, e.g. `BoardScenarios.swift`, invoked from that same
-`.task`. Components stay where they already are.
+The **only** SwiftBoard UI in the app is that badge. It does not replace your
+root screen. `BoardServer().start()` still exists if you want the server with no badge.
 
 Optional: pass `summary`, `parameters`, and `ScenarioDocs(snippet:)` so the board shows API
 copy. Skip them and you still get the snapshots.
@@ -87,14 +86,14 @@ Call it once at startup, behind `#if DEBUG`:
 
 ```swift
 #if DEBUG
-.task {
+.swiftBoard {
     BoardScenarios.registerAll()
-    try? await BoardServer().start()
 }
 #endif
 ```
 
-Run (⌘R), open the URL from the console.
+Run (⌘R). A green **SwiftBoard** badge appears on the app; tap to copy the URL,
+then open it on the Mac.
 
 For more than a couple of components, conform each type to `BoardScenarioProvider`
 in its own file (see Reference) instead of growing one file. That is what
@@ -112,9 +111,8 @@ into your app target, then:
 
 ```swift
 #if DEBUG
-.task {
+.swiftBoard {
     SwiftDSCatalogRegistrar.registerAll()
-    try? await BoardServer().start()
 }
 #endif
 ```
@@ -130,7 +128,7 @@ Same as 1a: add **SwiftBoardServer**, one new file, a few lines behind
 
 1. Add the dependency and build. Nothing calls it yet.
 2. Register one scenario wrapping a view you already have.
-3. Call `BoardServer().start()` from a `.task` in DEBUG. Prefer Simulator first.
+3. Attach `.swiftBoard { … }` in DEBUG. Prefer Simulator first.
 4. Confirm the URL shows that component.
 5. Add the rest of your views as providers, one at a time.
 6. On a physical iPhone, add `NSLocalNetworkUsageDescription` to Info.plist.

@@ -7,37 +7,32 @@ import SwiftUI
 @MainActor
 public struct BoardGallery: View {
     private let board: SwiftBoard
+    @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
-    @State private var selection: Selection?
-
-    private struct Selection: Hashable {
-        let category: String
-        let component: String
-    }
 
     public init(board: SwiftBoard? = nil) {
         self.board = board ?? .shared
     }
 
     public var body: some View {
-        NavigationSplitView {
-            List(selection: $selection) {
+        NavigationStack {
+            List {
                 ForEach(filteredGroups) { group in
                     Section(group.name) {
                         ForEach(group.components) { component in
-                            Text(component.name)
-                                .tag(Selection(category: group.id, component: component.id))
+                            NavigationLink(component.name) {
+                                ComponentDetail(component: component)
+                            }
                         }
                     }
                 }
             }
             .searchable(text: $searchText, prompt: "Search components")
             .navigationTitle("Components")
-        } detail: {
-            if let selection, let component = board.component(categorySlug: selection.category, componentSlug: selection.component) {
-                ComponentDetail(component: component)
-            } else {
-                ContentUnavailableView("Select a component", systemImage: "square.grid.2x2")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
             }
         }
     }
