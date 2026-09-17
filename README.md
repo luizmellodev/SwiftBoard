@@ -17,7 +17,8 @@ whatever the running app registered.
 1. Add the **SwiftBoardServer** library.
 2. Call `SwiftBoard.shared.addScenarios(...)` with your SwiftUI views (any file).
 3. Attach `.swiftBoard { … }` to the root view, behind `#if DEBUG` — that starts
-   the server and shows a live badge (green = up). Tap the badge to copy the URL.
+   the server and shows a live badge (green = up). Tap the badge to open the
+   in-app gallery; copy the URL from the sheet and paste it in a Mac browser.
 4. Open `http://127.0.0.1:8080` in a Mac browser. That website is the gallery.
 
 The **only** SwiftBoard UI in the app is that badge. It does not replace your
@@ -92,8 +93,8 @@ Call it once at startup, behind `#if DEBUG`:
 #endif
 ```
 
-Run (⌘R). A green **SwiftBoard** badge appears on the app; tap to copy the URL,
-then open it on the Mac.
+Run (⌘R). A green **SwiftBoard** badge appears on the app; tap it to open the
+gallery sheet. Copy the URL there and paste it in Safari/Chrome on the Mac.
 
 For more than a couple of components, conform each type to `BoardScenarioProvider`
 in its own file (see Reference) instead of growing one file. That is what
