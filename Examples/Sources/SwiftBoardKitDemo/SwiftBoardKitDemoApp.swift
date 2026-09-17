@@ -36,7 +36,7 @@ struct SwiftBoardKitDemoApp: App {
             .padding(40)
             .frame(minWidth: 420, minHeight: 200)
             .task {
-                SwiftDSCatalogRegistrar.registerAll()
+                SwiftBoardKit.registerAll()
                 await server.addAction(title: "Run iOS Demo (Simulator)") {
                     try Self.runIOSDemoScript()
                 }

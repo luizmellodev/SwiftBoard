@@ -1,4 +1,5 @@
-// Copy this file into an app that depends on both SwiftBoardServer and SwiftDS.
+/// Maps SwiftDS's own catalog onto SwiftBoard. Import the **SwiftBoardKit** product
+/// and call `SwiftBoardKit.registerAll()` — do not copy this file into the app.
 @_exported import SwiftBoard
 @_exported import SwiftBoardServer
 import CoreFoundation

@@ -13,7 +13,7 @@ struct SwiftBoardiOSDemoApp: App {
         WindowGroup {
             BoardGallery()
                 .task {
-                    SwiftDSCatalogRegistrar.registerAll()
+                    SwiftBoardKit.registerAll()
                     try? await server.start()
                 }
         }

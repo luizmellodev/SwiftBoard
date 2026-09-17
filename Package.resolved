@@ -1,5 +1,5 @@
 {
-  "originHash" : "cd3d99a6294263383056c6b5f6df2cc4d4eff48d12fe42efc7171b2d4f80d35b",
+  "originHash" : "4884cee0a284338a00365e395ac9100866caef4de4ea6199196dbaa6cc5b5259",
   "pins" : [
     {
       "identity" : "flyingfox",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "4e246d3fb515bd2069e5c169abdc75808b90548f",
         "version" : "0.27.1"
+      }
+    },
+    {
+      "identity" : "swiftds-package",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/luizmellodev/SwiftDS-package",
+      "state" : {
+        "branch" : "main",
+        "revision" : "1374e83d53fa49eb1838fed7b5264d9121f6ec16"
       }
     }
   ],

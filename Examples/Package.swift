@@ -1,41 +1,29 @@
 // swift-tools-version: 5.10
 import PackageDescription
 
-/// Maintainer-only package: SwiftDS demos. The published SwiftBoard package does not
-/// depend on SwiftDS. Requires a sibling checkout at ../../SwiftDS/package.
+/// Maintainer demos for the SwiftBoardKit product (SwiftBoard + SwiftDS).
 let package = Package(
     name: "SwiftBoardExamples",
     platforms: [
         .iOS(.v17),
         .macOS(.v14)
     ],
-    products: [
-        .library(name: "SwiftBoardKit", targets: ["SwiftBoardKit"])
-    ],
     dependencies: [
-        .package(path: ".."),
-        .package(name: "SwiftDS", path: "../../SwiftDS/package")
+        .package(path: "..")
     ],
     targets: [
-        .target(
-            name: "SwiftBoardKit",
-            dependencies: [
-                .product(name: "SwiftBoard", package: "SwiftBoard"),
-                .product(name: "SwiftBoardServer", package: "SwiftBoard"),
-                .product(name: "SwiftDS", package: "SwiftDS")
-            ],
-            path: ".",
-            exclude: ["Package.swift", "README.md", "Sources"],
-            sources: ["SwiftDSCatalogRegistrar.swift"]
-        ),
         .executableTarget(
             name: "SwiftBoardKitDemo",
-            dependencies: ["SwiftBoardKit"],
+            dependencies: [
+                .product(name: "SwiftBoardKit", package: "SwiftBoard")
+            ],
             path: "Sources/SwiftBoardKitDemo"
         ),
         .executableTarget(
             name: "SwiftBoardiOSDemo",
-            dependencies: ["SwiftBoardKit"],
+            dependencies: [
+                .product(name: "SwiftBoardKit", package: "SwiftBoard")
+            ],
             path: "Sources/SwiftBoardiOSDemo"
         )
     ]

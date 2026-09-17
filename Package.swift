@@ -9,10 +9,12 @@ let package = Package(
     ],
     products: [
         .library(name: "SwiftBoard", targets: ["SwiftBoard"]),
-        .library(name: "SwiftBoardServer", targets: ["SwiftBoardServer"])
+        .library(name: "SwiftBoardServer", targets: ["SwiftBoardServer"]),
+        .library(name: "SwiftBoardKit", targets: ["SwiftBoardKit"])
     ],
     dependencies: [
-        .package(url: "https://github.com/swhitty/FlyingFox", from: "0.19.0")
+        .package(url: "https://github.com/swhitty/FlyingFox", from: "0.19.0"),
+        .package(url: "https://github.com/luizmellodev/SwiftDS-package", branch: "main")
     ],
     targets: [
         .target(
@@ -27,6 +29,15 @@ let package = Package(
             ],
             path: "Sources/SwiftBoardServer",
             resources: [.process("Resources")]
+        ),
+        .target(
+            name: "SwiftBoardKit",
+            dependencies: [
+                "SwiftBoard",
+                "SwiftBoardServer",
+                .product(name: "SwiftDS", package: "SwiftDS-package")
+            ],
+            path: "Sources/SwiftBoardKit"
         ),
         .executableTarget(
             name: "SwiftBoardDemo",

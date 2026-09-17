@@ -6,8 +6,9 @@ running app. Register scenarios (a component + a named state), run your app,
 and open the URL it prints. Once running, click "?" in the site's header for
 the same walkthrough below, live.
 
-This package does **not** depend on [SwiftDS](https://github.com/luizmellodev/SwiftDS-package).
-Add SwiftDS yourself only if you want that design system as the default catalog.
+This package's **SwiftBoard** / **SwiftBoardServer** products do not use
+[SwiftDS](https://github.com/luizmellodev/SwiftDS-package). For a ready-made
+catalog, add the **SwiftBoardKit** product instead (it pulls SwiftDS for you).
 
 ## What you actually need
 
@@ -43,14 +44,13 @@ Wait for a small window to appear and the status text to say
 **Open in Browser**, or open that URL yourself. That website — a sidebar of
 components, click one, see its states — is the whole idea.
 
-If you also have SwiftDS checked out as a sibling folder (`../SwiftDS/package`),
-you can browse its catalog from this repo's **Examples** package (not part of
-the published product):
+If you also want the SwiftDS catalog, add the **SwiftBoardKit** product and run:
 
 ```bash
-cd Examples
-swift run SwiftBoardKitDemo
+swift run SwiftBoardKitDemo --package-path Examples
 ```
+
+(from this repo), or `cd Examples && swift run SwiftBoardKitDemo`.
 
 ### 2. Pick your case
 
@@ -58,7 +58,7 @@ swift run SwiftBoardKitDemo
 
 Add **only** this package. In Xcode: *File → Add Package Dependencies…*, paste
 `https://github.com/luizmellodev/SwiftBoard`, add the **SwiftBoardServer**
-library to your app target. Do **not** add SwiftDS.
+library to your app target. Do **not** add the **SwiftBoardKit** product.
 
 ```swift
 // Package.swift
@@ -102,25 +102,25 @@ in its own file (see Reference) instead of growing one file. That is what
 
 **1b — New app, use SwiftDS as the default design system**
 
-You must add **two** packages. SwiftBoard will not download SwiftDS for you.
+Add this package and link **SwiftBoardKit** (not only SwiftBoardServer). That
+product already contains the SwiftDS registrar — you do **not** copy any file.
 
-1. Add SwiftBoard → product **SwiftBoardServer**
-2. Add [SwiftDS](https://github.com/luizmellodev/SwiftDS-package) → product **SwiftDS**
-
-Copy [`Examples/SwiftDSCatalogRegistrar.swift`](Examples/SwiftDSCatalogRegistrar.swift)
-into your app target, then:
+Xcode: *File → Add Package Dependencies…* → SwiftBoard → add **SwiftBoardKit**
+to the app target. SwiftDS comes in transitively.
 
 ```swift
 #if DEBUG
+import SwiftBoardKit
+
 .swiftBoard {
-    SwiftDSCatalogRegistrar.registerAll()
+    SwiftBoardKit.registerAll()
 }
 #endif
 ```
 
-To *change* how a SwiftDS component looks, you need your own copy (a fork) of
-SwiftDS. Depending on the original lets you register extra scenarios, not edit
-SwiftDS source.
+Use SwiftDS views in your UI (`import SwiftDS` or `import SwiftBoardKit`, which
+re-exports it). To *change* how a SwiftDS component looks, fork SwiftDS; depending
+on the original only lets you register extra scenarios.
 
 **2 — Existing app (with or without a design system)**
 
@@ -134,8 +134,9 @@ Same as 1a: add **SwiftBoardServer**, one new file, a few lines behind
 5. Add the rest of your views as providers, one at a time.
 6. On a physical iPhone, add `NSLocalNetworkUsageDescription` to Info.plist.
 
-If that app already uses SwiftDS, also do step 1b (second package + copy the
-registrar) so the catalog and your own views can share the same board.
+If that app already uses SwiftDS, add **SwiftBoardKit** and call
+`SwiftBoardKit.registerAll()` plus your own `BoardScenarioProvider`s so both
+share the same board.
 
 > **On a real iOS device** (not needed on the Simulator or macOS):
 > `BoardServer` listens on all interfaces, not just loopback, so add
@@ -149,9 +150,11 @@ registrar) so the catalog and your own views can share the same board.
 for iOS. `SwiftBoardDemo` / `SwiftBoardKitDemo` are macOS-only (AppKit).
 `BoardGallery` is cross-platform SwiftUI and works on iOS.
 
-**I cloned this repo and `swift build` failed looking for SwiftDS.** The
-published package does not need SwiftDS. Build from the repo root. Only
-`cd Examples && swift run SwiftBoardKitDemo` needs a sibling SwiftDS checkout.
+**I cloned this repo and `swift build` failed looking for SwiftDS.** Core
+targets (`SwiftBoard`, `SwiftBoardServer`, `SwiftBoardDemo`) do not need it.
+`SwiftBoardKit` does — SPM will fetch
+[SwiftDS-package](https://github.com/luizmellodev/SwiftDS-package) when resolving
+this package. `swift test` does not build Kit.
 
 ## Reference
 
@@ -239,8 +242,10 @@ your design system grows. Two ways to keep it manageable:
   structured array of "component × variant" data — like SwiftDS's
   `DSComponentCatalog` — map it once with a small loop into the data-driven
   `addScenarios(category:component:scenarios:)` overload. This is what
-  `Examples/SwiftDSCatalogRegistrar.swift` does for SwiftDS's ~40 entries;
-  it scales to hundreds without hand-writing a registration call per state.
+  `Sources/SwiftBoardKit/SwiftDSCatalogRegistrar.swift` does for SwiftDS's catalog;
+  it scales to hundreds without hand-writing a registration call per state. Apps
+  never copy that file — they depend on **SwiftBoardKit** and call
+  `SwiftBoardKit.registerAll()`.
 
 **Modifying an existing component** — edit the SwiftUI view code inside the
 `Scenario`'s closure (or the underlying component's own source). This is
