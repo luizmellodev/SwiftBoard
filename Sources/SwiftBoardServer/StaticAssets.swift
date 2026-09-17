@@ -5,12 +5,19 @@ import Foundation
 enum StaticAssets {
     static func response(for filename: String) -> HTTPResponse {
         guard
-            let url = Bundle.module.url(forResource: filename, withExtension: nil, subdirectory: "Resources"),
+            let url = bundleURL(for: filename),
             let data = try? Data(contentsOf: url)
         else {
             return HTTPResponse(statusCode: .notFound)
         }
         return HTTPResponse(statusCode: .ok, headers: [.contentType: contentType(for: filename)], body: data)
+    }
+
+    private static func bundleURL(for filename: String) -> URL? {
+        if let url = Bundle.module.url(forResource: filename, withExtension: nil) {
+            return url
+        }
+        return Bundle.module.url(forResource: filename, withExtension: nil, subdirectory: "Resources")
     }
 
     private static func contentType(for filename: String) -> String {

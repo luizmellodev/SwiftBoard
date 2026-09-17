@@ -5,10 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SwiftBoard — Docs</title>
   <link rel="stylesheet" href="/app.css" />
+  <script>
+    (function () {
+      var stored = localStorage.getItem("sb-theme");
+      var theme = stored === "light" || stored === "dark"
+        ? stored
+        : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
 </head>
 <body>
   <div class="sb-docs-page">
-    <a class="sb-back-link" href="/">&larr; Back to board</a>
+    <div class="sb-docs-toolbar">
+      <a class="sb-back-link" href="/">&larr; Back to board</a>
+      <button id="theme-toggle" class="sb-icon-button" title="Toggle theme" aria-label="Toggle theme">
+        <span id="theme-icon">&#9789;</span>
+      </button>
+    </div>
     <h1>SwiftBoard</h1>
     <p class="sb-docs-subtitle">
       A runtime component gallery. You register <strong>scenarios</strong> (a component + a
@@ -17,6 +31,75 @@
       stored on disk unless you explicitly export it.
     </p>
 
+    <h2>What you actually need (no folder rules)</h2>
+    <p>SwiftBoard does not care where files live, how they are named, or whether you have a
+      “design system package.” There is no special folder and no required filename. The site is
+      generated at runtime from whatever you registered in the running app.</p>
+    <p>You only do <strong>two</strong> things:</p>
+    <ol>
+      <li><strong>Register</strong> — call <code>SwiftBoard.shared.addScenarios(...)</code> with
+        a SwiftUI view (any view: a <code>Button</code>, your <code>MeuBotao</code>, whatever).
+        That can live in the component’s own file or in one <code>BoardScenarios.swift</code>.
+        Optional: pass <code>summary</code>, <code>parameters</code>, and
+        <code>docs: ScenarioDocs(snippet:)</code> so the board shows API copy.</li>
+      <li><strong>Start the server</strong> — once, at app launch, behind
+        <code>#if DEBUG</code>:
+        <pre><code>#if DEBUG
+.task {
+    BoardScenarios.registerAll() // or addScenarios directly
+    try? await BoardServer().start()
+}
+#endif</code></pre>
+      </li>
+    </ol>
+    <p>Run the app (⌘R). The console prints <code>http://127.0.0.1:8080</code>. That URL
+      <em>is</em> the site. Stop the app and the site goes away (unless you
+      <code>StaticExporter.export</code>).</p>
+    <div class="sb-callout">
+      Building your own design system = normal SwiftUI views, anywhere in the target. SwiftBoard
+      is only the gallery. Using SwiftDS instead = add that second package and copy
+      <code>Examples/SwiftDSCatalogRegistrar.swift</code>, which already calls
+      <code>addScenarios</code> for you.
+    </div>
+
+    <h2>Where does the code go? (App.swift vs elsewhere)</h2>
+    <p>Something in the running process has to call <code>BoardServer().start()</code> or there
+      is no website. In an iOS/macOS app that is almost always the <code>@main</code> <code>App</code>
+      (often <code>YourApp.swift</code> / <code>App.swift</code>), on the root view, behind
+      <code>#if DEBUG</code>:</p>
+    <pre><code>@main
+struct MeuApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+            #if DEBUG
+                .task {
+                    BoardScenarios.registerAll()
+                    try? await BoardServer().start()
+                }
+            #endif
+        }
+    }
+}</code></pre>
+    <p>That <code>.task</code> is the only thing that <em>must</em> sit on the app entry point.
+      You do <strong>not</strong> put every component in <code>App.swift</code>.</p>
+    <ul>
+      <li><code>BoardScenarios.swift</code> (any name, any folder in the app target) —
+        <code>registerAll()</code> that calls <code>addScenarios</code>, <em>or</em></li>
+      <li>each component file, via <code>BoardScenarioProvider</code>, and
+        <code>registerAll()</code> only lists the types.</li>
+    </ul>
+    <p>If you skip the <code>.task</code> in the App struct, nothing starts the server — the
+      gallery files can exist and still never appear as a site.</p>
+    <div class="sb-callout">
+      <strong>You do not need <code>SwiftDSCatalogRegistrar.swift</code> unless you are using
+      SwiftDS.</strong> That ~300-line file only exists to map SwiftDS’s catalog + showroom into
+      <code>addScenarios</code>. For a design system you write yourself, a small
+      <code>BoardScenarios.swift</code> (or providers on each component) is enough — often under
+      30 lines to start. You also do not have to change <code>ContentView</code>; the test app
+      only added a DEBUG label with the URL, and that is optional.
+    </div>
+
     <h2>Getting started</h2>
     <p><strong>1. See it working (zero setup).</strong> This repo already has a working demo
       you can run before writing anything:</p>
@@ -24,8 +107,9 @@
 swift run SwiftBoardDemo</code></pre>
     <p>Wait for the status text to say <code>Running at http://127.0.0.1:8080</code>, then open
       that URL — that's this exact site, showing the demo's example components. (Have SwiftDS
-      checked out too? <code>swift run SwiftBoardKitDemo</code> shows the same thing with a real
-      design system.)</p>
+      checked out as a sibling? From this repo, <code>cd Examples && swift run SwiftBoardKitDemo</code>
+      shows the same thing with a real design system. That Examples package is not part of the
+      published SwiftBoard product.)</p>
     <p><strong>2. Point it at your own components.</strong> Once you've seen it work:</p>
     <ul>
       <li><strong>Already have an app?</strong> Add <code>SwiftBoardServer</code> as a
@@ -57,19 +141,31 @@ swift run SwiftBoardDemo</code></pre>
       state" below). Register + start behind <code>#if DEBUG</code>. This is the most tested
       path — it's exactly what <code>SwiftBoardDemo</code> in this repo does.</p>
     <p><strong>I want to start from a complete, ready-made design system instead of building one
-      from scratch.</strong> Depend on the <code>SwiftBoardKit</code> product instead of
-      <code>SwiftBoardServer</code>, and call <code>SwiftDSCatalogRegistrar.registerAll()</code>
-      — it registers all of SwiftDS's existing components for you. To later change a component's
-      actual appearance, you need your own copy of SwiftDS (a fork) — depending on the original
-      lets you add things on top, not edit SwiftDS's own component code.</p>
+      from scratch.</strong> Add <em>two</em> packages: <code>SwiftBoardServer</code> from
+      SwiftBoard, and <code>SwiftDS</code> from
+      <a href="https://github.com/luizmellodev/SwiftDS-package">SwiftDS</a>. Copy
+      <code>Examples/SwiftDSCatalogRegistrar.swift</code> into your app and call
+      <code>SwiftDSCatalogRegistrar.registerAll()</code>. SwiftBoard will not download SwiftDS
+      for you. To later change a component's actual appearance, you need your own copy of
+      SwiftDS (a fork).</p>
     <p><strong>Does that mean I need two package dependencies — SwiftBoard and SwiftDS?</strong>
-      No. Declaring just <code>.package(path: "path/to/SwiftBoard")</code> and depending on its
-      <code>SwiftBoardKit</code> product is enough — <code>import SwiftDS</code> will compile in
-      your own code too, since it comes along transitively (tested: this works even without
-      declaring SwiftDS directly). That said, if you intend to actually use SwiftDS's components
-      in your own app code, declare SwiftDS as your own direct dependency too — relying on the
-      transitive/"free ride" import is an SPM implementation detail that would break silently if
-      <code>SwiftBoardKit</code> ever stopped depending on SwiftDS.</p>
+      Yes, if you want the SwiftDS catalog. If you are building your own design system, add
+      only SwiftBoard.</p>
+    <p><strong>Does SwiftDS have to import SwiftBoard?</strong>
+      No. SwiftDS stays independent. <code>BoardScenarioProvider</code> lives in
+      <em>your</em> app (or in a design-system package that already depends on SwiftBoard).
+      A third-party DS that must not know about SwiftBoard is registered from the app with a
+      loop over its catalog (see <code>SwiftDSCatalogRegistrar</code>) — that file is glue in
+      the app, not a change to SwiftDS.</p>
+    <p><strong>Does SwiftBoard automatically find every SwiftUI view in my project?</strong>
+      No. It only shows what you <code>addScenarios</code>. There is no folder scan and no
+      “all <code>View</code> types” discovery — a <code>View</code> is just a type; the board
+      cannot know which ones are design-system components or which states to screenshot.
+      You register each component (or each state), the same way you add a <code>#Preview</code>.
+      To avoid one giant file, use <code>BoardScenarioProvider</code> on the component and a
+      one-line list in <code>registerAll()</code>. If you already have a data catalog (like
+      SwiftDS’s <code>DSComponentCatalog</code>), one loop can register everything — that is
+      what <code>SwiftDSCatalogRegistrar</code> is, not a SwiftBoard built-in.</p>
     <p><strong>I already have an app that doesn't use any design system — will adding SwiftBoard
       break anything, error, or crash?</strong> No — it's purely additive: one new file plus a
       few lines in your app's startup code, behind <code>#if DEBUG</code>. To roll it in
@@ -95,11 +191,9 @@ swift run SwiftBoardDemo</code></pre>
         <code>BoardServer().start()</code> from your app's startup code behind
         <code>#if DEBUG</code>. Nothing new to create.</li>
       <li><strong>You already have (or want) a separate design-system package</strong> — like
-        SwiftDS in this repo's <code>SwiftBoardKit</code> target: the design-system package
-        itself doesn't need to know SwiftBoard exists. A small bridge target/app (living
-        wherever is convenient — inside that package, inside your app, or standalone) depends on
-        both, registers the design system's components, and starts the server. This is exactly
-        the pattern <code>SwiftBoardKit</code> demonstrates for SwiftDS.</li>
+        SwiftDS: that package does not need to know SwiftBoard exists. Your app depends on both,
+        copies <code>Examples/SwiftDSCatalogRegistrar.swift</code> (or writes an equivalent
+        bridge), registers components, and starts the server.</li>
     </ul>
 
     <h2>Creating a new component / state</h2>
@@ -137,6 +231,28 @@ swift run SwiftBoardDemo</code></pre>
         entries; it scales to hundreds without a hand-written call per state.</li>
     </ul>
 
+    <h2>Documenting a component (so the board isn’t just pictures)</h2>
+    <p>The site does not inspect your SwiftUI view. Description, initializer parameters, and
+      the code snippet under each card are whatever you pass when you register. If you omit
+      them, the board still lists the named states and a hint to add docs.</p>
+    <pre><code>board.addScenarios(
+    category: "Actions",
+    component: "Button",
+    summary: "Primary tappable action.",
+    parameters: [
+        ScenarioParameter(name: "title", type: "String", description: "Label on the button."),
+        ScenarioParameter(name: "style", type: "Style", defaultValue: ".primary")
+    ]
+) {
+    Scenario("Primary", docs: ScenarioDocs(snippet: "DemoButton(title: \"Continue\", style: .primary)")) {
+        DemoButton(title: "Continue", style: .primary)
+    }
+}</code></pre>
+    <p><code>summary</code> and <code>parameters</code> show in the panel above the cards.
+      <code>ScenarioDocs(snippet:)</code> shows as the example under that state. Put this next
+      to the component (the same file as a <code>#Preview</code>) so the design system owns the
+      copy, not the website.</p>
+
     <h2>Modifying an existing component</h2>
     <p>Edit the SwiftUI view code inside the <code>Scenario</code>'s closure (or the underlying
       component's own source, if the scenario just wraps one). Since this is compiled Swift, not
@@ -172,34 +288,19 @@ swift run SwiftBoardDemo</code></pre>
     <p>To see <code>BoardGallery</code> — and this site's snapshots — rendered by a real iOS
       Simulator instead:</p>
     <pre><code>Scripts/run-ios-demo.sh</code></pre>
-    <p>This builds <code>SwiftBoardiOSDemo</code> (same SwiftDS registration as
-      <code>SwiftBoardKitDemo</code>, hosted in <code>BoardGallery</code>) for the iOS
+    <p>This builds <code>SwiftBoardiOSDemo</code> from <code>Examples/</code> (same SwiftDS
+      registration as <code>SwiftBoardKitDemo</code>, hosted in <code>BoardGallery</code>) for the iOS
       Simulator, hand-assembles it into an installable <code>.app</code> (plain
       <code>swift run</code>/<code>swift build</code> can't produce one — this repo has no
       <code>.xcodeproj</code>), installs it, and launches it on your currently booted
       Simulator. The website it starts is also reachable at
       <code>http://127.0.0.1:8080</code> from your Mac — same URL, now genuinely iOS-rendered.</p>
 
-    <h2>Using the SwiftDS starter (SwiftBoardKit)</h2>
-    <p><code>SwiftBoardKit</code> and <code>SwiftBoardKitDemo</code> are two extra targets that
-      already live inside <em>this same</em> <code>SwiftBoard</code> repository — they are not a
-      separate package, a plugin, or a feature flag you toggle on. A Swift package doesn't have
-      an "enable this target" switch; you simply choose which target to build, run, or depend on.</p>
-    <ul>
-      <li><strong>Just want to browse SwiftDS standalone?</strong> From this repo:
-        <code>swift run SwiftBoardKitDemo</code>. In Xcode, open this package and pick
-        "SwiftBoardKitDemo" from the scheme picker, then Run.</li>
-      <li><strong>Want it inside your own app instead?</strong> Depend on the
-        <code>SwiftBoardKit</code> product (not just <code>SwiftBoardServer</code>) from your
-        app's <code>Package.swift</code>, then call the registrar it exposes followed by
-        <code>BoardServer().start()</code> from your own code.</li>
-    </ul>
-    <div class="sb-callout">
-      Depending on <code>SwiftBoardKit</code> pulls in SwiftDS as a transitive dependency, even
-      if your app only uses a couple of its components elsewhere. If you don't want that, stick
-      to the plain <code>SwiftBoard</code>/<code>SwiftBoardServer</code> products and register
-      your own views instead.
-    </div>
+    <h2>Using the SwiftDS starter</h2>
+    <p>SwiftBoard's published package has no SwiftDS dependency. Maintainers with a sibling
+      SwiftDS checkout can run <code>cd Examples &amp;&amp; swift run SwiftBoardKitDemo</code>.
+      In your own app, add both packages and copy
+      <code>Examples/SwiftDSCatalogRegistrar.swift</code>.</p>
 
     <h2>Publishing a real, hosted site</h2>
     <p>The live server only exists while your app/process is running. To get a permanent,
@@ -208,5 +309,6 @@ swift run SwiftBoardDemo</code></pre>
     <p>This writes a self-contained folder (HTML/CSS/JS + every snapshot PNG) you can deploy
       anywhere static files are served, or open directly via <code>file://</code>.</p>
   </div>
+  <script src="/app.js"></script>
 </body>
 </html>

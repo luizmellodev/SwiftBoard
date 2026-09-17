@@ -3,3 +3,4 @@
 .build-ios-demo/
 .swiftpm/
 *.xcodeproj
+Examples/.build/

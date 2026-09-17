@@ -34,11 +34,31 @@ struct DemoButton: View {
 /// maintain as more components/states are added.
 extension DemoButton: BoardScenarioProvider {
     static func provideScenarios(into board: SwiftBoard) {
-        board.addScenarios(category: "Actions", component: "Button") {
-            Scenario("Primary") { DemoButton(title: "Continue", style: .primary) }
-            Scenario("Secondary") { DemoButton(title: "Continue", style: .secondary) }
-            Scenario("Disabled") { DemoButton(title: "Continue", style: .disabled) }
-            Scenario("Loading", layout: .fitContent(maxWidth: 180)) { DemoButton(title: "Continue", style: .loading) }
+        board.addScenarios(
+            category: "Actions",
+            component: "Button",
+            summary: "Primary tappable action for this demo design system.",
+            parameters: [
+                ScenarioParameter(name: "title", type: "String", description: "Label on the button."),
+                ScenarioParameter(name: "style", type: "DemoButton.Style", defaultValue: ".primary", description: ".primary, .secondary, .disabled, .loading.")
+            ]
+        ) {
+            Scenario("Primary", docs: ScenarioDocs(snippet: "DemoButton(title: \"Continue\", style: .primary)")) {
+                DemoButton(title: "Continue", style: .primary)
+            }
+            Scenario("Secondary", docs: ScenarioDocs(snippet: "DemoButton(title: \"Continue\", style: .secondary)")) {
+                DemoButton(title: "Continue", style: .secondary)
+            }
+            Scenario("Disabled", docs: ScenarioDocs(snippet: "DemoButton(title: \"Continue\", style: .disabled)")) {
+                DemoButton(title: "Continue", style: .disabled)
+            }
+            Scenario(
+                "Loading",
+                layout: .fitContent(maxWidth: 180),
+                docs: ScenarioDocs(snippet: "DemoButton(title: \"Continue\", style: .loading)")
+            ) {
+                DemoButton(title: "Continue", style: .loading)
+            }
         }
     }
 }

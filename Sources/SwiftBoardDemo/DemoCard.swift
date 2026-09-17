@@ -17,8 +17,17 @@ struct DemoCard: View {
 
 extension DemoCard: BoardScenarioProvider {
     static func provideScenarios(into board: SwiftBoard) {
-        board.addScenarios(category: "Data Display", component: "Card") {
-            Scenario("Elevated", layout: .fitContent(maxWidth: 280)) { DemoCard() }
+        board.addScenarios(
+            category: "Data Display",
+            component: "Card",
+            summary: "Simple content container.",
+            parameters: []
+        ) {
+            Scenario(
+                "Elevated",
+                layout: .fitContent(maxWidth: 280),
+                docs: ScenarioDocs(snippet: "DemoCard()")
+            ) { DemoCard() }
         }
     }
 }

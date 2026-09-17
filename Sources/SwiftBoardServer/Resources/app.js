@@ -13,8 +13,10 @@
 
   function applyTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
-    document.getElementById("theme-icon").textContent = theme === "dark" ? "☀" : "☽";
-    if (currentComponentSlug) {
+    var icon = document.getElementById("theme-icon");
+    if (icon) icon.textContent = theme === "dark" ? "☀" : "☽";
+    if (document.getElementById("grid") && currentComponentSlug) {
+      renderDocs();
       renderGrid();
     }
   }
@@ -42,7 +44,54 @@
       );
     });
     renderBreadcrumb();
+    renderDocs();
     renderGrid();
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function renderDocs() {
+    var panel = document.getElementById("component-docs");
+    var found = findComponent(currentCategorySlug, currentComponentSlug);
+    if (!found) {
+      panel.hidden = true;
+      panel.innerHTML = "";
+      return;
+    }
+
+    var component = found.component;
+    var summary = component.summary || "";
+    var parameters = component.parameters || [];
+    var html = "";
+    if (summary) {
+      html += "<p>" + escapeHtml(summary) + "</p>";
+    }
+    if (parameters.length > 0) {
+      html += "<table class=\"sb-params\"><thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Notes</th></tr></thead><tbody>";
+      parameters.forEach(function (parameter) {
+        html +=
+          "<tr><td><code>" +
+          escapeHtml(parameter.name) +
+          "</code></td><td><code>" +
+          escapeHtml(parameter.type) +
+          "</code></td><td>" +
+          escapeHtml(parameter.defaultValue || "—") +
+          "</td><td>" +
+          escapeHtml(parameter.description || "") +
+          "</td></tr>";
+      });
+      html += "</tbody></table>";
+    } else {
+      html += "<p class=\"sb-docs-hint\">No initializer docs yet. When you register this component, pass <code>summary</code> and <code>parameters</code>, and <code>docs: ScenarioDocs(snippet:)</code> on each state.</p>";
+    }
+    panel.innerHTML = html;
+    panel.hidden = false;
   }
 
   function renderBreadcrumb() {
@@ -72,20 +121,39 @@
     grid.innerHTML = found.component.scenarios
       .map(function (scenario) {
         var url = scenario.snapshots[theme]["2x"];
+        var full = scenario.snapshots[theme]["3x"] || url;
+        var snippet = scenario.snippet
+          ? '<pre class="sb-card-snippet"><code>' + escapeHtml(scenario.snippet) + "</code></pre>"
+          : "";
+        var summary = scenario.summary
+          ? '<p class="sb-card-caption">' + escapeHtml(scenario.summary) + "</p>"
+          : "";
         return (
           '<figure class="sb-card">' +
-          '<div class="sb-card-preview"><img src="' +
+          '<button type="button" class="sb-card-preview" data-full="' +
+          full +
+          '" data-caption="' +
+          escapeHtml(scenario.name) +
+          '"><img src="' +
           url +
           '" alt="' +
-          scenario.name +
-          '" loading="lazy" /></div>' +
+          escapeHtml(scenario.name) +
+          '" loading="lazy" /></button>' +
           '<figcaption class="sb-card-caption">' +
-          scenario.name +
+          escapeHtml(scenario.name) +
           "</figcaption>" +
+          summary +
+          snippet +
           "</figure>"
         );
       })
       .join("");
+
+    grid.querySelectorAll(".sb-card-preview").forEach(function (button) {
+      button.addEventListener("click", function () {
+        openLightbox(button.dataset.full, button.dataset.caption);
+      });
+    });
   }
 
   function renderSidebar() {
@@ -192,8 +260,26 @@
     });
   }
 
+  function openLightbox(src, caption) {
+    var lightbox = document.getElementById("lightbox");
+    document.getElementById("lightbox-img").src = src;
+    document.getElementById("lightbox-img").alt = caption;
+    document.getElementById("lightbox-caption").textContent = caption;
+    lightbox.hidden = false;
+  }
+
+  function closeLightbox() {
+    document.getElementById("lightbox").hidden = true;
+    document.getElementById("lightbox-img").src = "";
+  }
+
   function boot() {
     applyTheme(currentTheme());
+
+    var toggle = document.getElementById("theme-toggle");
+    if (toggle) toggle.addEventListener("click", toggleTheme);
+
+    if (!document.getElementById("sidebar-nav")) return;
 
     fetch("/manifest.json")
       .then(function (response) { return response.json(); })
@@ -212,9 +298,14 @@
       });
 
     document.getElementById("search").addEventListener("input", onSearch);
-    document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+    document.getElementById("lightbox").addEventListener("click", function (event) {
+      if (event.target.id === "lightbox" || event.target.id === "lightbox-close") {
+        closeLightbox();
+      }
+    });
 
     document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closeLightbox();
       if (event.key === "/" && document.activeElement.tagName !== "INPUT") {
         event.preventDefault();
         document.getElementById("search").focus();

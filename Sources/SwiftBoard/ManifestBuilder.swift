@@ -7,6 +7,8 @@ public enum ManifestBuilder {
                     ManifestScenario(
                         name: scenario.name,
                         slug: scenario.id,
+                        summary: scenario.docs.summary,
+                        snippet: scenario.docs.snippet,
                         snapshots: snapshotVariants(
                             categorySlug: group.id,
                             componentSlug: component.id,
@@ -14,7 +16,13 @@ public enum ManifestBuilder {
                         )
                     )
                 }
-                return ManifestComponent(name: component.name, slug: component.id, scenarios: scenarios)
+                return ManifestComponent(
+                    name: component.name,
+                    slug: component.id,
+                    summary: component.resolvedSummary,
+                    parameters: component.parameters,
+                    scenarios: scenarios
+                )
             }
             return ManifestCategory(name: group.name, slug: group.id, components: components)
         }

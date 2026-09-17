@@ -14,12 +14,16 @@ public struct ManifestCategory: Codable, Equatable, Sendable {
 public struct ManifestComponent: Codable, Equatable, Sendable {
     public var name: String
     public var slug: String
+    public var summary: String?
+    public var parameters: [ScenarioParameter]
     public var scenarios: [ManifestScenario]
 }
 
 public struct ManifestScenario: Codable, Equatable, Sendable {
     public var name: String
     public var slug: String
+    public var summary: String?
+    public var snippet: String?
     public var snapshots: ManifestSnapshotVariants
 }
 

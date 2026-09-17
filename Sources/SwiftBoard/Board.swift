@@ -23,18 +23,41 @@ public final class SwiftBoard {
     public func addScenarios(
         category: String,
         component: String,
+        summary: String? = nil,
+        parameters: [ScenarioParameter] = [],
         @ScenarioBuilder scenarios: () -> [Scenario]
     ) {
-        addScenarios(category: category, component: component, scenarios: scenarios())
+        addScenarios(
+            category: category,
+            component: component,
+            summary: summary,
+            parameters: parameters,
+            scenarios: scenarios()
+        )
     }
 
     /// Data-driven overload for bulk registration (e.g. from an existing design system's catalog).
-    public func addScenarios(category: String, component: String, scenarios: [Scenario]) {
+    public func addScenarios(
+        category: String,
+        component: String,
+        summary: String? = nil,
+        parameters: [ScenarioParameter] = [],
+        scenarios: [Scenario]
+    ) {
         let categorySlug = Slug.make(category)
         let componentSlug = Slug.make(component)
         let key = "\(categorySlug)/\(componentSlug)"
 
-        var entry = components[key] ?? Component(id: componentSlug, name: component, category: category, scenarios: [])
+        var entry = components[key] ?? Component(
+            id: componentSlug,
+            name: component,
+            category: category,
+            summary: summary,
+            parameters: parameters,
+            scenarios: []
+        )
+        if entry.summary == nil { entry.summary = summary }
+        if entry.parameters.isEmpty { entry.parameters = parameters }
         entry.scenarios = Self.dedupe(entry.scenarios + scenarios)
         components[key] = entry
 

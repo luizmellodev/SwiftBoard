@@ -26,12 +26,18 @@
     </aside>
     <main class="sb-main">
       <div id="breadcrumb" class="sb-breadcrumb"></div>
+      <section id="component-docs" class="sb-component-docs" hidden></section>
       <div id="grid" class="sb-grid"></div>
       <div id="empty-state" class="sb-empty-state" hidden>
         <p>No components registered yet.</p>
         <p class="sb-empty-hint">Call <code>SwiftBoard.shared.addScenarios(...)</code> in your app, then reload.</p>
       </div>
     </main>
+  </div>
+  <div id="lightbox" class="sb-lightbox" hidden>
+    <button type="button" id="lightbox-close" class="sb-lightbox-close" aria-label="Close">×</button>
+    <img id="lightbox-img" alt="" />
+    <p id="lightbox-caption" class="sb-lightbox-caption"></p>
   </div>
   <script src="/app.js"></script>
 </body>

@@ -9,12 +9,10 @@ let package = Package(
     ],
     products: [
         .library(name: "SwiftBoard", targets: ["SwiftBoard"]),
-        .library(name: "SwiftBoardServer", targets: ["SwiftBoardServer"]),
-        .library(name: "SwiftBoardKit", targets: ["SwiftBoardKit"])
+        .library(name: "SwiftBoardServer", targets: ["SwiftBoardServer"])
     ],
     dependencies: [
-        .package(url: "https://github.com/swhitty/FlyingFox", from: "0.19.0"),
-        .package(name: "SwiftDS", path: "../SwiftDS/package")
+        .package(url: "https://github.com/swhitty/FlyingFox", from: "0.19.0")
     ],
     targets: [
         .target(
@@ -28,31 +26,12 @@ let package = Package(
                 .product(name: "FlyingFox", package: "FlyingFox")
             ],
             path: "Sources/SwiftBoardServer",
-            resources: [.copy("Resources")]
+            resources: [.process("Resources")]
         ),
         .executableTarget(
             name: "SwiftBoardDemo",
             dependencies: ["SwiftBoardServer"],
             path: "Sources/SwiftBoardDemo"
-        ),
-        .target(
-            name: "SwiftBoardKit",
-            dependencies: [
-                "SwiftBoard",
-                "SwiftBoardServer",
-                .product(name: "SwiftDS", package: "SwiftDS")
-            ],
-            path: "Sources/SwiftBoardKit"
-        ),
-        .executableTarget(
-            name: "SwiftBoardKitDemo",
-            dependencies: ["SwiftBoardKit"],
-            path: "Sources/SwiftBoardKitDemo"
-        ),
-        .executableTarget(
-            name: "SwiftBoardiOSDemo",
-            dependencies: ["SwiftBoardKit"],
-            path: "Sources/SwiftBoardiOSDemo"
         ),
         .testTarget(
             name: "SwiftBoardTests",

@@ -54,9 +54,10 @@ struct SwiftBoardKitDemoApp: App {
     /// regardless of the working directory `swift run` was invoked from.
     private nonisolated static func runIOSDemoScript() throws {
         let scriptURL = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
+            .deletingLastPathComponent() // SwiftBoardKitDemo
+            .deletingLastPathComponent() // Sources
+            .deletingLastPathComponent() // Examples
+            .deletingLastPathComponent() // repo root
             .appendingPathComponent("Scripts/run-ios-demo.sh")
 
         let process = Process()

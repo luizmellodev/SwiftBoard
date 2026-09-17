@@ -10,6 +10,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+EXAMPLES_DIR="$ROOT_DIR/Examples"
 BUNDLE_ID="dev.luizmello.swiftboard.iosdemo"
 PRODUCT="SwiftBoardiOSDemo"
 MIN_OS="17.0"
@@ -28,12 +29,12 @@ fi
 
 echo "Building for iOS Simulator..."
 SDK_PATH=$(xcrun --sdk iphonesimulator --show-sdk-path)
-cd "$ROOT_DIR"
+cd "$EXAMPLES_DIR"
 # A dedicated --build-path, separate from the default .build — sharing .build with a
 # concurrently running `swift run`/`swift build` (e.g. the macOS demo that triggered this
 # script) risks racing on the same build artifacts and producing a corrupted binary.
 IOS_BUILD_PATH="$ROOT_DIR/.build-ios-demo"
-swift build --build-path "$IOS_BUILD_PATH" --sdk "$SDK_PATH" --triple arm64-apple-ios${MIN_OS}-simulator --product "$PRODUCT"
+swift build --package-path "$EXAMPLES_DIR" --build-path "$IOS_BUILD_PATH" --sdk "$SDK_PATH" --triple arm64-apple-ios${MIN_OS}-simulator --product "$PRODUCT"
 
 BUILD_DIR="$IOS_BUILD_PATH/arm64-apple-ios-simulator/debug"
 APP_DIR="$IOS_BUILD_PATH/$PRODUCT.app"

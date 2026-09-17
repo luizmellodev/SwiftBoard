@@ -71,6 +71,44 @@ private struct ComponentDetail: View {
             .padding(20)
         }
         .navigationTitle(component.name)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(component.resolvedSummary)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                if component.parameters.isEmpty {
+                    Text("No initializer docs yet. Pass summary: and parameters: to addScenarios, and docs: ScenarioDocs(snippet:) on each Scenario.")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                } else {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(component.parameters, id: \.name) { parameter in
+                            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                Text(parameter.name)
+                                    .font(.caption.monospaced())
+                                Text(parameter.type)
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                                if let defaultValue = parameter.defaultValue {
+                                    Text("= \(defaultValue)")
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            if let description = parameter.description {
+                                Text(description)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(.background)
+        }
     }
 }
 
@@ -87,6 +125,21 @@ private struct ScenarioCard: View {
             Text(scenario.name)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+
+            if let summary = scenario.docs.summary {
+                Text(summary)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
+            if let snippet = scenario.docs.snippet {
+                Text(snippet)
+                    .font(.system(.caption2, design: .monospaced))
+                    .textSelection(.enabled)
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 6))
+            }
         }
     }
 

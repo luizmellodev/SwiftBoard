@@ -16,11 +16,18 @@ import UIKit
 public enum ScenarioRenderer {
     public static func renderPNG(scenario: Scenario, scale: CGFloat, colorScheme: ColorScheme) -> Data? {
         let background = colorScheme == .dark ? Color(white: 0.11) : Color.white
+        let hugsContent = {
+            switch scenario.layout {
+            case .fitContent: return true
+            case .fixed: return false
+            }
+        }()
         let content = AnyView(
             scenario.render()
                 .environment(\.colorScheme, colorScheme)
                 .padding(20)
                 .background(background)
+                .fixedSize(horizontal: hugsContent, vertical: false)
         )
 
         #if canImport(AppKit)
@@ -41,7 +48,13 @@ public enum ScenarioRenderer {
             hostingView.frame = CGRect(x: 0, y: 0, width: maxWidth, height: 10)
             hostingView.layoutSubtreeIfNeeded()
             let measured = hostingView.fittingSize
-            hostingView.frame = CGRect(origin: .zero, size: measured)
+            hostingView.frame = CGRect(
+                origin: .zero,
+                size: CGSize(
+                    width: min(max(measured.width, 1), maxWidth),
+                    height: min(max(measured.height, 1), 720)
+                )
+            )
         case .fixed(let width, let height):
             hostingView.frame = CGRect(x: 0, y: 0, width: width, height: height)
         }
@@ -74,17 +87,23 @@ public enum ScenarioRenderer {
         let hostingController = UIHostingController(rootView: content)
         guard let view = hostingController.view else { return nil }
 
+        view.backgroundColor = .clear
+        if #available(iOS 16.4, *) {
+            hostingController.safeAreaRegions = []
+        }
+
         switch layout {
         case .fitContent(let maxWidth):
-            view.frame = CGRect(x: 0, y: 0, width: maxWidth, height: 10)
-            view.setNeedsLayout()
-            view.layoutIfNeeded()
-            let measured = view.systemLayoutSizeFitting(
-                CGSize(width: maxWidth, height: .greatestFiniteMagnitude),
-                withHorizontalFittingPriority: .required,
-                verticalFittingPriority: .fittingSizeLevel
+            let fitted = hostingController.sizeThatFits(
+                in: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
             )
-            view.frame = CGRect(origin: .zero, size: CGSize(width: maxWidth, height: measured.height))
+            view.frame = CGRect(
+                origin: .zero,
+                size: CGSize(
+                    width: min(max(fitted.width, 1), maxWidth),
+                    height: min(max(fitted.height, 1), 720)
+                )
+            )
         case .fixed(let width, let height):
             view.frame = CGRect(x: 0, y: 0, width: width, height: height)
         }
@@ -94,6 +113,17 @@ public enum ScenarioRenderer {
         let size = view.bounds.size
         guard size.width > 0, size.height > 0 else { return nil }
 
+        let window: UIWindow
+        if let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first {
+            window = UIWindow(windowScene: scene)
+        } else {
+            window = UIWindow(frame: CGRect(origin: .zero, size: size))
+        }
+        window.frame = CGRect(origin: .zero, size: size)
+        window.rootViewController = hostingController
+        window.isHidden = false
+        view.layoutIfNeeded()
+
         let format = UIGraphicsImageRendererFormat()
         format.scale = scale
         format.opaque = false
@@ -101,6 +131,8 @@ public enum ScenarioRenderer {
         let image = renderer.image { _ in
             view.drawHierarchy(in: view.bounds, afterScreenUpdates: true)
         }
+        window.isHidden = true
+        window.rootViewController = nil
         return image.pngData()
     }
     #endif
