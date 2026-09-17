@@ -1,112 +1,102 @@
 # SwiftBoard
 
-A Playbook-inspired component gallery for SwiftUI — but instead of a native
-in-app screen, it serves a live, browsable **website** from inside your
-running app. Register scenarios (a component + a named state), run your app,
-and open the URL it prints. Once running, click "?" in the site's header for
-the same walkthrough below, live.
+A Playbook-style gallery for SwiftUI: you **register** component states in code, then browse them as a **website** (and optionally a sheet in the app).
 
-This package's **SwiftBoard** / **SwiftBoardServer** products do not use
-[SwiftDS](https://github.com/luizmellodev/SwiftDS-package). For a ready-made
-catalog, add the **SwiftBoardKit** product instead (it pulls SwiftDS for you).
+Nothing is scanned from disk. The board is whatever the running process registered.
 
-## What you actually need
+| Product | Use when |
+|---|---|
+| **SwiftBoardServer** | You have (or will write) your own design system |
+| **SwiftBoardKit** | You want [SwiftDS](https://github.com/luizmellodev/SwiftDS-package) as a ready-made system *and* its catalog on the board |
 
-No special folder, filename, or project layout. The site is not generated from disk — it is
-whatever the running app registered.
+Same Swift package URL. In Xcode you only **link** the product you need. Kit pulls SwiftDS; you do not copy a registrar file.
 
-1. Add the **SwiftBoardServer** library.
-2. Call `SwiftBoard.shared.addScenarios(...)` with your SwiftUI views (any file).
-3. Attach `.swiftBoard { … }` to the root view, behind `#if DEBUG` — that starts
-   the server and shows a live badge (green = up). Tap the badge to open the
-   in-app gallery; copy the URL from the sheet and paste it in a Mac browser.
-4. Open `http://127.0.0.1:8080` in a Mac browser. That website is the gallery.
+SwiftDS is a **separate** UI library. Fork it to change how controls look. Kit only wires its catalog into SwiftBoard.
 
-The **only** SwiftBoard UI in the app is that badge. It does not replace your
-root screen. `BoardServer().start()` still exists if you want the server with no badge.
+---
 
-Optional: pass `summary`, `parameters`, and `ScenarioDocs(snippet:)` so the board shows API
-copy. Skip them and you still get the snapshots.
-
-## Getting started
-
-### 1. See it working (zero setup)
-
-This repo already has a working demo — you don't need to write anything yet.
+## Try it (this repo)
 
 ```bash
-cd SwiftBoard
 swift run SwiftBoardDemo
 ```
 
-Wait for a small window to appear and the status text to say
-`Running at http://127.0.0.1:8080` (also printed in the terminal), then click
-**Open in Browser**, or open that URL yourself. That website — a sidebar of
-components, click one, see its states — is the whole idea.
+When it says `Running at http://127.0.0.1:8080`, open that URL. That site *is* the product.
 
-If you also want the SwiftDS catalog, add the **SwiftBoardKit** product and run:
+SwiftDS catalog demo:
 
 ```bash
-swift run SwiftBoardKitDemo --package-path Examples
+cd Examples && swift run SwiftBoardKitDemo
 ```
 
-(from this repo), or `cd Examples && swift run SwiftBoardKitDemo`.
+---
 
-### 2. Pick your case
+## Add it to an app
 
-**1a — New app, design system from scratch**
+Xcode: *File → Add Package Dependencies…* → `https://github.com/luizmellodev/SwiftBoard`
 
-Add **only** this package. In Xcode: *File → Add Package Dependencies…*, paste
-`https://github.com/luizmellodev/SwiftBoard`, add the **SwiftBoardServer**
-library to your app target. Do **not** add the **SwiftBoardKit** product.
+### Own design system
+
+Link **SwiftBoardServer** only (not Kit).
 
 ```swift
-// Package.swift
-.package(url: "https://github.com/luizmellodev/SwiftBoard", from: "0.1.0")
-// target dependencies: .product(name: "SwiftBoardServer", package: "SwiftBoard")
+// App.swift
+WindowGroup {
+    ContentView()           // your real UI — unchanged
+    #if DEBUG
+    .swiftBoard {
+        BoardScenarios.registerAll()
+    }
+    #endif
+}
 ```
 
-Create `BoardScenarios.swift` in the app target:
+On each component, a DEBUG extension (like a `#Preview`):
 
 ```swift
+#if DEBUG
+import SwiftBoardServer
+
+extension AppButton: BoardScenarioProvider {
+    static func provideScenarios(into board: SwiftBoard) {
+        board.addScenarios(
+            category: "Actions",
+            component: "Button",
+            summary: "Primary tappable action.",
+            parameters: [ScenarioParameter(name: "title", type: "String")]
+        ) {
+            Scenario("Primary", docs: ScenarioDocs(snippet: "AppButton(title: \"Continue\")")) {
+                AppButton(title: "Continue")
+            }
+            Scenario("Disabled") { AppButton(title: "Continue").disabled(true) }
+        }
+    }
+}
+#endif
+```
+
+One list of types:
+
+```swift
+#if DEBUG
 import SwiftBoardServer
 
 enum BoardScenarios {
     @MainActor
     static func registerAll() {
-        SwiftBoard.shared.addScenarios(category: "Actions", component: "Button") {
-            Scenario("Primary") {
-                Button("Continue") {}.buttonStyle(.borderedProminent)
-            }
-        }
+        SwiftBoard.shared.addScenarios(from: [AppButton.self, AppBadge.self])
     }
-}
-```
-
-Call it once at startup, behind `#if DEBUG`:
-
-```swift
-#if DEBUG
-.swiftBoard {
-    BoardScenarios.registerAll()
 }
 #endif
 ```
 
-Run (⌘R). A green **SwiftBoard** badge appears on the app; tap it to open the
-gallery sheet. Copy the URL there and paste it in Safari/Chrome on the Mac.
+⌘R → green **SwiftBoard** badge → sheet (in-app gallery) or copy the URL and open it on the Mac. Stop the app and localhost dies.
 
-For more than a couple of components, conform each type to `BoardScenarioProvider`
-in its own file (see Reference) instead of growing one file. That is what
-`SwiftBoardDemo` in this repo does.
+Existing app: same steps, one component at a time. On a **physical iPhone**, add `NSLocalNetworkUsageDescription` to Info.plist.
 
-**1b — New app, use SwiftDS as the default design system**
+### SwiftDS as the template
 
-Add this package and link **SwiftBoardKit** (not only SwiftBoardServer). That
-product already contains the SwiftDS registrar — you do **not** copy any file.
-
-Xcode: *File → Add Package Dependencies…* → SwiftBoard → add **SwiftBoardKit**
-to the app target. SwiftDS comes in transitively.
+Link **SwiftBoardKit**. Do not copy any registrar.
 
 ```swift
 #if DEBUG
@@ -118,197 +108,76 @@ import SwiftBoardKit
 #endif
 ```
 
-Use SwiftDS views in your UI (`import SwiftDS` or `import SwiftBoardKit`, which
-re-exports it). To *change* how a SwiftDS component looks, fork SwiftDS; depending
-on the original only lets you register extra scenarios.
+Use `DSButton` (etc.) in your UI. You can still register *your* types in the same `registerAll()` after `SwiftBoardKit.registerAll()`.
 
-**2 — Existing app (with or without a design system)**
+---
 
-Same as 1a: add **SwiftBoardServer**, one new file, a few lines behind
-`#if DEBUG`. Nothing existing is touched.
+## While the app is running vs a hosted URL
 
-1. Add the dependency and build. Nothing calls it yet.
-2. Register one scenario wrapping a view you already have.
-3. Attach `.swiftBoard { … }` in DEBUG. Prefer Simulator first.
-4. Confirm the URL shows that component.
-5. Add the rest of your views as providers, one at a time.
-6. On a physical iPhone, add `NSLocalNetworkUsageDescription` to Info.plist.
+**Localhost** (`http://127.0.0.1:8080`) is a live server inside the DEBUG app. Designers only see it if that process is up. Reloading the browser after a code change is not enough: rebuild/run, then reload.
 
-If that app already uses SwiftDS, add **SwiftBoardKit** and call
-`SwiftBoardKit.registerAll()` plus your own `BoardScenarioProvider`s so both
-share the same board.
+**Hosted site** (Vercel, Netlify, S3, GitHub Pages) is a **static snapshot**. Running the app does **not** update Vercel. You export a folder of HTML + PNGs and **upload that folder**.
 
-> **On a real iOS device** (not needed on the Simulator or macOS):
-> `BoardServer` listens on all interfaces, not just loopback, so add
-> `NSLocalNetworkUsageDescription` to your app's Info.plist (any string
-> explaining why, e.g. "Used to preview the design system in a browser") —
-> without it, iOS may block the first connection instead of serving it.
+### How to publish / update the hosted board
 
-## FAQ
+The hosted site is a photograph of one build. New components or a new DS version do **not** appear until you export again and replace what is on the host.
 
-**Does this work on iOS, or only macOS?** The libraries (and FlyingFox) compile
-for iOS. `SwiftBoardDemo` / `SwiftBoardKitDemo` are macOS-only (AppKit).
-`BoardGallery` is cross-platform SwiftUI and works on iOS.
+1. Change the design system and registrations. Rebuild.
+2. On a **Mac** (or iOS Simulator) — SwiftUI snapshots cannot be generated on Linux/Vercel — export:
 
-**I cloned this repo and `swift build` failed looking for SwiftDS.** Core
-targets (`SwiftBoard`, `SwiftBoardServer`, `SwiftBoardDemo`) do not need it.
-`SwiftBoardKit` does — SPM will fetch
-[SwiftDS-package](https://github.com/luizmellodev/SwiftDS-package) when resolving
-this package. `swift test` does not build Kit.
+   ```swift
+   try await StaticExporter.export(to: URL(fileURLWithPath: "./site"))
+   ```
 
-## Reference
+   From this repo:
 
-### Install
+   ```bash
+   SWIFTBOARD_EXPORT=./site swift run SwiftBoardDemo
+   ```
 
-```swift
-.package(url: "https://github.com/luizmellodev/SwiftBoard", from: "0.1.0")
-```
+3. That folder is the whole site: `index.html`, `app.css`, `app.js`, `docs.html`, `manifest.json`, `snapshots/**/*.png`. Upload **all of it**, not only the HTML.
+4. Point the host at that folder (Vercel: deploy the directory, or drag-and-drop). Designers open the public URL. No app running.
 
-Add `SwiftBoardServer` as a dependency of a debug/dev target — it re-exports
-`SwiftBoard`, so `import SwiftBoardServer` is all you need.
+To ship **0.0.2** after 0.0.1: repeat 1–4. Overwrite the previous deploy. Old PNGs are not patched in place; each export is a full new tree.
 
-### Registering scenarios
+Optional: a **macOS** CI job that runs the export and deploys the folder. A Linux Vercel build cannot call `StaticExporter`.
 
-```swift
-import SwiftBoardServer
+Without a server, `.swiftBoard` still shows `BoardGallery` in the sheet. `BoardGallery` alone (product **SwiftBoard**, no FlyingFox) is the same registry as live SwiftUI, not snapshots.
 
-SwiftBoard.shared.addScenarios(category: "Actions", component: "Button") {
-    Scenario("Primary") {
-        Button("Continue") {}.buttonStyle(.borderedProminent)
-    }
-    Scenario("Disabled") {
-        Button("Continue") {}.buttonStyle(.borderedProminent).disabled(true)
-    }
-    Scenario("Loading") {
-        HStack { ProgressView(); Text("Continue") }
-    }
-}
-```
+---
 
-Open the printed URL: a sidebar lists every registered category/component;
-selecting one shows all of its registered states as live-rendered snapshots.
+## Registering, docs, edits
 
-The server only runs in DEBUG builds by default. To opt in for a Release
-build, set the `SWIFTBOARD_ENABLE=1` environment variable.
+SwiftBoard does not discover views. Skip `summary` / `parameters` / `ScenarioDocs` and you still get named states and pictures.
 
-**Documenting a component** — SwiftBoard cannot read a SwiftUI view's
-initializer (no runtime reflection of `init` arguments). You attach copy
-when you register. If you skip it, the site still lists the named states
-and a hint to add docs:
+Same category+component again **appends** states. Remove a component by deleting its registration and restarting — nothing is persisted.
 
-```swift
-board.addScenarios(
-    category: "Actions",
-    component: "Button",
-    summary: "Primary tappable action.",
-    parameters: [
-        ScenarioParameter(name: "title", type: "String", description: "Label on the button."),
-        ScenarioParameter(name: "style", type: "Style", defaultValue: ".primary")
-    ]
-) {
-    Scenario("Primary", docs: ScenarioDocs(snippet: "DemoButton(title: \"Continue\", style: .primary)")) {
-        DemoButton(title: "Continue", style: .primary)
-    }
-}
-```
+Default: server is DEBUG-only. Release: `SWIFTBOARD_ENABLE=1`.
 
-**Creating a new component / state** — call `addScenarios` again, for a new
-component or one that already exists (it appends). No file-naming convention
-is enforced — but don't pile every component's registration into one file as
-your design system grows. Two ways to keep it manageable:
+Without `.swiftBoard`, you can still `.task { register(); try await BoardServer().start() }`.
 
-- **Co-located, one file per component (recommended default).** Conform the
-  component's own type to `BoardScenarioProvider`, right in the same file as
-  the component — the same way you'd add a `#Preview` block:
-  ```swift
-  // DemoButton.swift — the file where DemoButton is already defined
-  extension DemoButton: BoardScenarioProvider {
-      static func provideScenarios(into board: SwiftBoard) {
-          board.addScenarios(category: "Actions", component: "Button") {
-              Scenario("Primary") { DemoButton(title: "Continue", style: .primary) }
-              Scenario("Disabled") { DemoButton(title: "Continue", style: .disabled) }
-          }
-      }
-  }
-  ```
-  Then one line per component ties them together, wherever you call it:
-  ```swift
-  SwiftBoard.shared.addScenarios(from: [DemoButton.self, DemoBadge.self, DemoCard.self])
-  ```
-  Adding a component means adding one line to that list, not growing a
-  central file. See `Sources/SwiftBoardDemo/*.swift` in this repo for a real
-  example of this pattern.
-- **Data-driven, from an existing catalog.** If you already have (or want) a
-  structured array of "component × variant" data — like SwiftDS's
-  `DSComponentCatalog` — map it once with a small loop into the data-driven
-  `addScenarios(category:component:scenarios:)` overload. This is what
-  `Sources/SwiftBoardKit/SwiftDSCatalogRegistrar.swift` does for SwiftDS's catalog;
-  it scales to hundreds without hand-writing a registration call per state. Apps
-  never copy that file — they depend on **SwiftBoardKit** and call
-  `SwiftBoardKit.registerAll()`.
+---
 
-**Modifying an existing component** — edit the SwiftUI view code inside the
-`Scenario`'s closure (or the underlying component's own source). This is
-compiled Swift, not a script — there's no live-reload: stop the process,
-rebuild/run again, then reload the browser.
+## iOS chrome vs Mac demos
 
-**Removing a component** — delete or comment out its `addScenarios` call and
-restart. There's no persisted registry to clean up — the board only exists
-in memory for the life of the running process.
-
-### Static export
-
-```swift
-try await StaticExporter.export(to: URL(fileURLWithPath: "./site"))
-```
-
-Produces a self-contained `index.html` + `app.css` + `app.js` + `docs.html` +
-`manifest.json` + `snapshots/**/*.png` folder — deployable to any static
-host, or just open `index.html` via `file://`.
-
-### Native gallery view (no server required)
-
-Everything above serves a *website*. If you'd rather show the same registered
-scenarios **inside your own app**, natively — no HTTP server, no
-`SwiftBoardServer`/FlyingFox dependency at all — use `BoardGallery`, a plain
-SwiftUI `View` that lives in the base `SwiftBoard` target:
-
-```swift
-import SwiftBoard
-
-.sheet(isPresented: $showGallery) {
-    BoardGallery() // reads SwiftBoard.shared by default
-}
-```
-
-It reads the exact same registry the website reads, so a single
-`addScenarios` call feeds both — but here each state renders as your actual
-live SwiftUI view (not a snapshot image), inside a searchable
-sidebar/detail layout you can present however you like (sheet, push, a
-shake-gesture debug menu, whatever fits your app). This is the piece
-equivalent to Playbook's in-app `PlaybookGallery`/`PlaybookCatalog`, or to
-SwiftDS's own `DSShowcaseRoot` — except generic, driven by whatever you've
-registered.
-
-### Previewing on iOS (not just macOS)
-
-`SwiftBoardDemo` and `SwiftBoardKitDemo` are plain macOS processes
-(`swift run` just runs a binary on your Mac) — fine for the website, but if
-your design system targets iOS, a macOS process renders SwiftUI with macOS's
-chrome (fonts, control styles), not iOS's. That's misleading for anything
-that isn't purely custom-drawn.
-
-To see `BoardGallery` — and the website's snapshots — rendered by a real
-iOS Simulator instead (needs sibling SwiftDS):
+`swift run SwiftBoardDemo` uses **macOS** SwiftUI. For iOS-accurate snapshots:
 
 ```bash
 Scripts/run-ios-demo.sh
 ```
 
-This builds `SwiftBoardiOSDemo` from `Examples/` for the iOS Simulator,
-hand-assembles it into an installable `.app` (plain `swift run`/`swift build`
-can't produce one — that packaging is normally Xcode's job, and this repo
-has no `.xcodeproj`), installs it, and launches it on your currently booted
-Simulator. Pass a device UDID as an argument to target a specific one. The
-website it starts is also reachable at `http://127.0.0.1:8080` from your Mac
-— same URL as the macOS demos, but now genuinely iOS-rendered.
+(from this repo; uses the Kit demo on the Simulator). The Mac can still open `http://127.0.0.1:8080`.
+
+---
+
+## FAQ
+
+**Does adding SwiftBoard change my production UI?** No. Link it, call it only in DEBUG.
+
+**Does SPM download SwiftDS if I only wanted Server?** Resolving this package may fetch SwiftDS because Kit exists. Your app binary only includes SwiftDS if you link **SwiftBoardKit** (or SwiftDS yourself).
+
+**Does SwiftDS import SwiftBoard?** No. Kit is the bridge.
+
+**Can I git clone a “Kit repo”?** No. One package, two products.
+
+**Live-reload?** No. Rebuild, run, reload the browser.
