@@ -13,7 +13,7 @@ let package = Package(
         .library(name: "SwiftBoardKit", targets: ["SwiftBoardKit"])
     ],
     dependencies: [
-        .package(url: "https://github.com/swhitty/FlyingFox", from: "0.19.0"),
+        .package(url: "https://github.com/swhitty/FlyingFox", .upToNextMinor(from: "0.27.0")),
         .package(url: "https://github.com/luizmellodev/SwiftDS-package", from: "0.1.0")
     ],
     targets: [

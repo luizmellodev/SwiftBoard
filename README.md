@@ -154,6 +154,8 @@ Same category+component again **appends** states. Remove a component by deleting
 
 Default: server is DEBUG-only. Release: `SWIFTBOARD_ENABLE=1`.
 
+**Network exposure.** The server listens on every network interface, not only `127.0.0.1`. That is what lets a Mac open the board served by a physical iPhone, but it also means anyone on the same Wi-Fi can browse your registered components and their snippets while the app runs. Avoid running it on untrusted networks (cafés, conferences). Custom actions (`addAction`) only run for requests from the device itself; other devices get `403`.
+
 Without `.swiftBoard`, you can still `.task { register(); try await BoardServer().start() }`.
 
 ---
