@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/luizmellodev/SwiftDS-package",
       "state" : {
-        "revision" : "fb7453bb625f59916209cca25ce7f8c2714a0723",
-        "version" : "0.1.1"
+        "revision" : "b25dbcee94f924967ecf6afcb9bd0ffed5f37a36",
+        "version" : "0.1.2"
       }
     }
   ],
