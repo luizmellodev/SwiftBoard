@@ -14,7 +14,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/swhitty/FlyingFox", from: "0.19.0"),
-        .package(url: "https://github.com/luizmellodev/SwiftDS-package", branch: "main")
+        .package(url: "https://github.com/luizmellodev/SwiftDS-package", from: "0.1.0")
     ],
     targets: [
         .target(
