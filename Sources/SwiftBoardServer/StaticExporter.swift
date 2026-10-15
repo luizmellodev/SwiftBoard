@@ -26,7 +26,7 @@ public struct StaticExporter {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
         for name in ["index.html", "app.css", "app.js", "docs.html"] {
-            guard let source = Bundle.module.url(forResource: name, withExtension: nil, subdirectory: "Resources") else {
+            guard let source = StaticAssets.bundleURL(for: name) else {
                 throw StaticExporterError.missingResource(name)
             }
             let destination = directory.appendingPathComponent(name)

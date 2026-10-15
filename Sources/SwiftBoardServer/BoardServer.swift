@@ -31,14 +31,21 @@ public actor BoardServer {
         actions.append(BoardAction(title: title, id: id, run: run))
     }
 
+    /// `false` in Release builds unless `SWIFTBOARD_ENABLE=1` is set; `start()` is then a no-op.
+    public nonisolated static var isEnabled: Bool {
+        #if DEBUG
+        return true
+        #else
+        return ProcessInfo.processInfo.environment["SWIFTBOARD_ENABLE"] == "1"
+        #endif
+    }
+
     /// Starts the server. No-ops in Release builds unless `SWIFTBOARD_ENABLE=1` is set.
     public func start() async throws {
-        #if !DEBUG
-        guard ProcessInfo.processInfo.environment["SWIFTBOARD_ENABLE"] == "1" else {
+        guard Self.isEnabled else {
             print("SwiftBoard: disabled in Release builds. Set SWIFTBOARD_ENABLE=1 to opt in.")
             return
         }
-        #endif
 
         await registerRoutes()
 

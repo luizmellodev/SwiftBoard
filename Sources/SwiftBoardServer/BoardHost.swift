@@ -26,6 +26,7 @@ private struct BoardHost<Content: View>: View {
     private enum Status: Equatable {
         case starting
         case running
+        case disabled
         case failed(String)
     }
 
@@ -49,6 +50,10 @@ private struct BoardHost<Content: View>: View {
             }
             .task(id: port) {
                 register()
+                guard BoardServer.isEnabled else {
+                    status = .disabled
+                    return
+                }
                 do {
                     try await server.start()
                     status = .running
@@ -87,6 +92,7 @@ private struct BoardHost<Content: View>: View {
         switch status {
         case .starting: return "starting…"
         case .running: return "127.0.0.1:\(port)"
+        case .disabled: return "server off (Release)"
         case .failed(let message): return message
         }
     }
@@ -95,6 +101,7 @@ private struct BoardHost<Content: View>: View {
         switch status {
         case .starting: return .yellow
         case .running: return .green
+        case .disabled: return .gray
         case .failed: return .red
         }
     }

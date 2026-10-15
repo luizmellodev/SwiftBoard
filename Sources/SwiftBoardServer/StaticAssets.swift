@@ -13,7 +13,9 @@ enum StaticAssets {
         return HTTPResponse(statusCode: .ok, headers: [.contentType: contentType(for: filename)], body: data)
     }
 
-    private static func bundleURL(for filename: String) -> URL? {
+    /// `.process("Resources")` flattens files to the bundle root, but check the subdirectory too
+    /// in case a toolchain keeps the folder. Shared with `StaticExporter`.
+    static func bundleURL(for filename: String) -> URL? {
         if let url = Bundle.module.url(forResource: filename, withExtension: nil) {
             return url
         }
