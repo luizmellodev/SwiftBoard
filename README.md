@@ -4,6 +4,8 @@ A Playbook-style gallery for SwiftUI: you **register** component states in code,
 
 Nothing is scanned from disk. The board is whatever the running process registered.
 
+> **Work in progress.** SwiftBoard is pre-1.0 and actively developed: features are still being added, and a minor release may change an API. Pin a version and check the release notes before upgrading.
+
 | Product | Use when |
 |---|---|
 | **SwiftBoardServer** | You have (or will write) your own design system |
