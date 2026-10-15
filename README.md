@@ -33,7 +33,17 @@ cd Examples && swift run SwiftBoardKitDemo
 
 ## Add it to an app
 
-Xcode: *File → Add Package Dependencies…* → `https://github.com/luizmellodev/SwiftBoard`
+Requirements: iOS 17+ / macOS 14+, Xcode 15.3+ (Swift 5.10).
+
+Xcode: *File → Add Package Dependencies…* → `https://github.com/luizmellodev/SwiftBoard` → *Up to Next Major* from `0.1.1`.
+
+Package.swift:
+
+```swift
+.package(url: "https://github.com/luizmellodev/SwiftBoard", from: "0.1.1")
+// target:
+.product(name: "SwiftBoardServer", package: "SwiftBoard")
+```
 
 ### Own design system
 
@@ -92,7 +102,7 @@ enum BoardScenarios {
 
 ⌘R → green **SwiftBoard** badge → sheet (in-app gallery) or copy the URL and open it on the Mac. Stop the app and localhost dies.
 
-Existing app: same steps, one component at a time. On a **physical iPhone**, add `NSLocalNetworkUsageDescription` to Info.plist.
+Existing app: same steps, one component at a time. On a **physical iPhone**, add `NSLocalNetworkUsageDescription` to Info.plist. The copied `127.0.0.1` link only works on the device itself (or from the Simulator's host Mac); from a Mac, open `http://<iPhone-IP>:8080` instead (Settings → Wi-Fi → ⓘ shows the IP), with both on the same network.
 
 ### SwiftDS as the template
 
