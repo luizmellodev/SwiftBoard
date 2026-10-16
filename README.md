@@ -19,17 +19,24 @@ SwiftDS is a **separate** UI library. Fork it to change how controls look. Kit o
 
 ## Try it (this repo)
 
-```bash
-swift run SwiftBoardDemo
-```
+There is no `.xcodeproj`: this is a Swift package. Either use the terminal, or open `Package.swift` (root) / `Examples/Package.swift` in Xcode and pick a scheme.
 
-When it says `Running at http://127.0.0.1:8080`, open that URL. That site *is* the product.
+| What you want to check | Run | You'll see |
+|---|---|---|
+| It builds and tests pass (what CI runs) | `swift test` · Xcode: ⌘U | All XCTest cases green |
+| SwiftBoard alone (own design system) | `swift run SwiftBoardDemo` · Xcode: scheme **SwiftBoardDemo**, destination **My Mac** | A small Mac window, and the site at `http://127.0.0.1:8080` with fake `DemoButton` / `DemoBadge` / `DemoCard` components |
+| SwiftBoard + SwiftDS on the Mac | `cd Examples && swift run SwiftBoardKitDemo` · Xcode: open `Examples/Package.swift`, scheme **SwiftBoardKitDemo**, **My Mac** | Mac window with *Open in Browser* / *Run iOS Demo*, site with the SwiftDS catalog in macOS chrome |
+| SwiftBoard + SwiftDS on iOS | Boot one Simulator, then `./Scripts/run-ios-demo.sh` from the repo root | The app opens on the Simulator with the in-app gallery, and also serves `http://127.0.0.1:8080`; open it in the Mac's browser. Snapshots use real iOS chrome |
 
-SwiftDS catalog demo:
+When a demo says `Running at http://127.0.0.1:8080`, open that URL. That site *is* the product.
 
-```bash
-cd Examples && swift run SwiftBoardKitDemo
-```
+Things that trip you up:
+
+- **Both Mac demos are macOS-only** (they import AppKit). In Xcode, a Simulator destination fails with `No such module 'AppKit'`; switch to **My Mac**. For iOS, use the script: SwiftPM cannot build an installable iOS `.app` by itself, so the script assembles one.
+- **One demo at a time.** They all bind port 8080. The iOS demo ignores a failed start, so if a Mac demo is still up, the iOS app opens but serves nothing.
+- **Stopping.** The site lives as long as the process: `Ctrl+C` for `swift run`, ■ in Xcode, or close the app on the Simulator (`xcrun simctl terminate booted dev.luizmello.swiftboard.iosdemo`). To find whoever holds the port: `lsof -nP -iTCP:8080 -sTCP:LISTEN`.
+- **SwiftDS comes from GitHub**, at the version pinned in `Package.resolved`, not from a local SwiftDS checkout. A SwiftDS change shows up here only after it is tagged and you run `swift package update`.
+- **Moved or renamed the folder?** Builds fail with `PCH was compiled with module cache path …` / `missing required module 'SwiftShims'`. Delete the stale caches and rebuild: `rm -rf .build .build-ios-demo Examples/.build`.
 
 ---
 
@@ -169,18 +176,6 @@ Default: server is DEBUG-only. Release: `SWIFTBOARD_ENABLE=1`.
 **Network exposure.** The server listens on every network interface, not only `127.0.0.1`. That is what lets a Mac open the board served by a physical iPhone, but it also means anyone on the same Wi-Fi can browse your registered components and their snippets while the app runs. Avoid running it on untrusted networks (cafés, conferences). Custom actions (`addAction`) only run for requests from the device itself; other devices get `403`.
 
 Without `.swiftBoard`, you can still `.task { register(); try await BoardServer().start() }`.
-
----
-
-## iOS chrome vs Mac demos
-
-`swift run SwiftBoardDemo` uses **macOS** SwiftUI. For iOS-accurate snapshots:
-
-```bash
-Scripts/run-ios-demo.sh
-```
-
-(from this repo; uses the Kit demo on the Simulator). The Mac can still open `http://127.0.0.1:8080`.
 
 ---
 
